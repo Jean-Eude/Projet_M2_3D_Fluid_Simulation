@@ -25,7 +25,22 @@ void EditorManager::OnReadConfigFile(const char* cfg) {
                 if (a.first == "ui_docking") {
                     m_isUIDocked = static_cast<bool>(arg);
                 }
+
+                if (a.first == "window_major") {
+                    m_major = arg;
+                }
+
+                if (a.first == "window_minor") {
+                    m_minor = arg;
+                }
             }
         }, a.second);
     }
+}
+
+std::string EditorManager::getGUIVersion() {
+    std::stringstream versionStream;
+    versionStream << "#version " << m_major << m_minor << "0";
+    version = versionStream.str();
+    return this->version;
 }

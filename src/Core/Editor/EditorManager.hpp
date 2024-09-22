@@ -21,5 +21,9 @@ class EditorManager : public ParserConfig {
 
         bool m_isUIDocked;
 
+        std::string version;
+        int m_major, m_minor;
+
         virtual void OnReadConfigFile(const char* cfg);
+        std::string getGUIVersion();
 };

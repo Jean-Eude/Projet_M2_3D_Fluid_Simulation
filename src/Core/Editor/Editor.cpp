@@ -18,7 +18,7 @@ void Editor::OnInitUI(GLFWwindow* window) {
     ImGui::StyleColorsDark();
 
     ImGui_ImplGlfw_InitForOpenGL(m_window_ui, true);
-    ImGui_ImplOpenGL3_Init("#version 460");
+    ImGui_ImplOpenGL3_Init(getGUIVersion().c_str());
 
     m_io->Fonts->AddFontFromFileTTF(m_iconPath.c_str(), m_fontSize);
 
