@@ -1,0 +1,12 @@
+############### Window ###############
+window_width = 1280
+window_height = 720
+window_title = FluidSimulation
+window_major = 4
+window_minor = 5
+window_vsync = 1
+############### UI ###############
+ui_fontsize = 18.0
+ui_mainfont_light = Roboto-Regular.ttf
+ui_mainfont_bold = Roboto-Regular.ttf
+ui_docking = 1
