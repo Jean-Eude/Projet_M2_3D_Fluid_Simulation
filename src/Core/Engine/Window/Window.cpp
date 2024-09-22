@@ -10,8 +10,8 @@ void Window::OnInitWindow(int m_width, int m_height, std::string m_title, unsign
     }
 
     // Spécification des attributs de la fenêtre
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, m_major);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, m_minor);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE); 
     glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
