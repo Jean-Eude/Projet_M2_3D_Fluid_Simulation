@@ -160,7 +160,7 @@ void EngineManager::OnUpdateWindowEngine() {
     glm::mat4 model = glm::mat4(1.0f);
 
     glm::mat4 projection = glm::mat4(1.0f);
-    //projection = glm::perspective(glm::radians(90.0f), static_cast<float>(m_fbo.getWinWidth()) / m_fbo.getWinHeight(), 0.1f, 10000.0f);
+    //projection = glm::perspective(glm::radians(90.0f), static_cast<float>(m_fbo.getFBOWidth()) / m_fbo.getFBOHeight(), 0.1f, 10000.0f);
 
     glm::mat4 view = glm::mat4(1.0f);
     //glm::vec3 cameraPos = glm::vec3(0.0f, 5.0f, 5.0f);

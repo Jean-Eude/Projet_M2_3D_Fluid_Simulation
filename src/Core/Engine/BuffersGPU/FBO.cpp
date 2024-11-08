@@ -5,6 +5,9 @@ void FBO::createFBO(int width, int height) {
     m_winWidth = width;
     m_winHeight = height;
 
+	m_fboWidth = width;
+	m_fboHeight = height;
+
 	glGenFramebuffers(1, &m_fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 	glGenTextures(1, &texid);
@@ -42,6 +45,9 @@ void FBO::rescaleMainWindow(int width, int height) {
 }
 
 void FBO::rescaleFBO(int width, int height) {
+	m_fboWidth = width;
+	m_fboHeight = height;
+
 	glBindTexture(GL_TEXTURE_2D, texid);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
