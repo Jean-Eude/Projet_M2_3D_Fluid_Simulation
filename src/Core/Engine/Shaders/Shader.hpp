@@ -8,13 +8,18 @@ class Shader {
         ~Shader();
 
         void loadShader(const std::string& vertex, const std::string& fragment);
+        void hotReload();
         void unloadShader();
+        void useShader();
 
-        unsigned int getVertexID() const;
-        unsigned int getFragmentID() const;
-        unsigned int getShaderID() const;
-        const std::string& getName() const;
+        unsigned int getVertexID();
+        unsigned int getFragmentID();
+        unsigned int getShaderID();
+        std::string& getName();
         void setName(const std::string& name);
+
+        std::string& getVertexPath();
+        std::string& getFragmentPath();
 
     private:
         std::string m_vertex;

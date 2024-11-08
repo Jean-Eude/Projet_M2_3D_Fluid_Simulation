@@ -19,7 +19,7 @@ void Shader::loadShader(const std::string& vertex, const std::string& fragment) 
     vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     try {
-        std::cout << this->m_vertex << std::endl;
+        //std::cout << this->m_vertex << std::endl;
 
         std::stringstream vShadertream, fShadertream;
         vShadertream << vShaderFile.rdbuf();
@@ -29,6 +29,7 @@ void Shader::loadShader(const std::string& vertex, const std::string& fragment) 
         vertexCode = vShadertream.str();
         fragmentCode = fShadertream.str();
     } catch (std::ifstream::failure& e) {
+
         std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: " << e.what() << std::endl;
         return;
     }
@@ -40,7 +41,7 @@ void Shader::loadShader(const std::string& vertex, const std::string& fragment) 
     this->m_vertexID = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(this->m_vertexID, 1, &vShaderCode, NULL);
     glCompileShader(this->m_vertexID);
-    int success;
+    int success;    
     char infoLog[512];
     glGetShaderiv(this->m_vertexID, GL_COMPILE_STATUS, &success);
     if (!success) {
@@ -73,26 +74,45 @@ void Shader::loadShader(const std::string& vertex, const std::string& fragment) 
     glDeleteShader(this->m_fragmentID);
 }
 
-void Shader::unloadShader() {
-    glDeleteProgram(this->m_shaderID);
+void Shader::hotReload() {
+    loadShader(this->m_vertex.c_str(), this->m_fragment.c_str());
 }
 
-unsigned int Shader::getVertexID() const {
+void Shader::unloadShader() {
+    if (this->m_shaderID != 0) {
+        glDeleteProgram(this->m_shaderID);
+        this->m_shaderID = 0;
+    }
+}
+
+void Shader::useShader() {
+    glUseProgram(this->m_shaderID);
+}
+
+unsigned int Shader::getVertexID() {
     return this->m_vertexID;
 }
 
-unsigned int Shader::getFragmentID() const {
+unsigned int Shader::getFragmentID() {
     return this->m_fragmentID;
 }
 
-unsigned int Shader::getShaderID() const {
+unsigned int Shader::getShaderID() {
     return this->m_shaderID;
 }
 
-const std::string& Shader::getName() const {
+std::string& Shader::getName() {
     return m_name;
 }
 
 void Shader::setName(const std::string& name) {
     m_name = name;
+}
+
+std::string& Shader::getVertexPath() {
+    return this->m_vertex;
+}
+
+std::string& Shader::getFragmentPath() {
+    return this->m_fragment;
 }
