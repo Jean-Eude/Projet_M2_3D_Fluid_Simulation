@@ -11,6 +11,7 @@
 #include <TexturesManager.hpp>
 #include <Texture.hpp>
 #include <Shader.hpp>
+#include <Camera.hpp>
 
 #include <ComputeShader.hpp>
 

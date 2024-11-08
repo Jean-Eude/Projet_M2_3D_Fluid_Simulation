@@ -1,33 +1,5 @@
 #include <Camera.hpp>
 
-void mouse_pos_callback(GLFWwindow* window, double xpos, double ypos){
-    if(flag == true){
-        //Get the screen coordinates when mouse clicks.
-        arcCamera.currentPos.x = ((xpos - (SCR_WIDTH/2) ) / (SCR_WIDTH/2)) * RADIUS;
-        arcCamera.currentPos.y = (((SCR_HEIGHT/2) - ypos) / (SCR_HEIGHT/2)) * RADIUS;
-        arcCamera.currentPos.z = arcCamera.z_axis(arcCamera.currentPos.x, arcCamera.currentPos.y);
-        arcCamera.rotation();
-    }
-}
-
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
-    //action == glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
-    if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS){
-        
-        double startXPos, startYPos; //screen coordinates when mouse clicks.
-        glfwGetCursorPos(window, &startXPos, &startYPos);
-        arcCamera.startPos.x = ((startXPos - (SCR_WIDTH/2) ) / (SCR_WIDTH/2)) * RADIUS; //convert to NDC, then assign to startPos.
-        arcCamera.startPos.y = (((SCR_HEIGHT/2) - startYPos) / (SCR_HEIGHT/2)) * RADIUS;// ..same for y coordinate.
-        arcCamera.startPos.z = arcCamera.z_axis(arcCamera.startPos.x, arcCamera.startPos.y);
-        flag = true;
-    }
-     else if(action == GLFW_RELEASE){
-        arcCamera.replace();
-        flag = false;
-
-        }
-}
-
 float ArcballCamera::z_axis(float x, float y){
     float z = 0; 
     if(sqrt((x * x) + (y * y)) <= RADIUS) z = (float)sqrt((RADIUS * RADIUS) - (x * x) - (y * y)); 

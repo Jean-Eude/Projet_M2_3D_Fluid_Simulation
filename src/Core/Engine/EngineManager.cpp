@@ -12,6 +12,7 @@ bool Window::m_vsync;
 
 
 unsigned int VBO, VAO, EBO;
+ArcballCamera camera;
 
 int numGroupsX = (unsigned int)1280/10;
 int numGroupsY = (unsigned int)720/10;
@@ -156,6 +157,23 @@ void EngineManager::OnUpdateWindowEngine() {
     // Others
     m_editor.OnUpdateUI();
 
+    glm::mat4 model = glm::mat4(1.0f);
+
+    glm::mat4 projection = glm::mat4(1.0f);
+    //projection = glm::perspective(glm::radians(90.0f), static_cast<float>(m_fbo.getWinWidth()) / m_fbo.getWinHeight(), 0.1f, 10000.0f);
+
+    glm::mat4 view = glm::mat4(1.0f);
+    //glm::vec3 cameraPos = glm::vec3(0.0f, 5.0f, 5.0f);
+    //glm::vec3 cameraTarget;
+    //glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+    //glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraTarget, cameraUp);
+    //view = glm::translate(view, glm::vec3(0.5,0.5,0));
+    //view = glm::rotate(view, glm::radians(80.0f), glm::vec3(1, 0, 0));
+    //view = glm::translate(view, camera.position);
+    //view = glm::rotate(view, glm::radians(camera.angle), camera.rotationalAxis);
+    glm::mat4 mvp = projection * view * model;
+    
+    shaders.setBind4fv("Base", "mvp", 1, GL_FALSE, glm::value_ptr(mvp));
 
     m_fbo.bindFBO();
         OnUpdateWindow();
