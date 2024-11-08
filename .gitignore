@@ -1,0 +1,4 @@
+bin/*
+
+# Excepté le CMakeLists.txt
+!bin/CMakeLists.txt

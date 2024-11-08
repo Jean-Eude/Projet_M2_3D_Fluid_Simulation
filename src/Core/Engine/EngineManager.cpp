@@ -13,6 +13,10 @@ bool Window::m_vsync;
 
 unsigned int VBO, VAO, EBO;
 
+int numGroupsX = (unsigned int)1280/10;
+int numGroupsY = (unsigned int)720/10;
+int numGroupsZ = 1;
+
 EngineManager::EngineManager() {
     // Valeurs de base au cas où le fichier de config ne fonctionnerait pass
     m_done = false;
@@ -70,21 +74,25 @@ void EngineManager::OnInitWindowEngine() {
     OnReadConfigFile(FilePath::getFilePath("/Assets/EngineParameters/config_engine.flx").c_str());    
     OnInitWindow(m_width, m_height, m_title, m_major, m_minor, m_vsync);
     m_inputs = std::make_unique<Inputs>(m_window);
+    
     // En dessous de m_inputs
     m_editor.OnInitUI(m_window);
     
     addTimer("Global Timer");
     m_TimersList.at(0).Start();
     
-    shader.loadShader(FilePath::getFilePath("/Assets/EngineAssets/Shaders/vertex.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/fragment.glsl"));
+    shaders.enqueueShader("Base", FilePath::getFilePath("/Assets/EngineAssets/Shaders/vertex.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/fragCS.glsl"));
+
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
     float vertices[] = {
-         0.5f,  0.5f, 0.0f,  // top right
-         0.5f, -0.5f, 0.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f,  // bottom left
-        -0.5f,  0.5f, 0.0f   // top left 
+        // positions         // texture coords
+        0.5f,  0.5f, 0.0f,  1.0f, 1.0f,  // top right
+        0.5f, -0.5f, 0.0f,  1.0f, 0.0f,  // bottom right
+        -0.5f, -0.5f, 0.0f,  0.0f, 0.0f,  // bottom left
+        -0.5f,  0.5f, 0.0f,  0.0f, 1.0f   // top left 
     };
+
     unsigned int indices[] = {  // note that we start from 0!
         0, 1, 3,  // first Triangle
         1, 2, 3   // second Triangle
@@ -93,7 +101,6 @@ void EngineManager::OnInitWindowEngine() {
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
-    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -102,18 +109,26 @@ void EngineManager::OnInitWindowEngine() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    // Position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
+    // Texture coordinate attribute
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
 
-    // remember: do NOT unbind the EBO while a VAO is active as the bound element buffer object IS stored in the VAO; keep the EBO bound.
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0); 
+
+
+    textures.enqueueTexture("terrain1", FilePath::getFilePath("/Assets/EngineAssets/Textures/terrain.jpg"), TEX_2D, true, GL_REPEAT, GL_LINEAR);
+    textures.enqueueRawTexture("terrain2", TEX_2D, TEX_RGBA32F, false, 512, 512, true, GL_REPEAT, GL_LINEAR);
+    textures.enqueueTexture("terrain3", FilePath::getFilePath("/Assets/EngineAssets/Textures/terrain2.jpg"), TEX_2D, true, GL_REPEAT, GL_LINEAR);
+
+    shaders.useShaderByName("Base");
+    shaders.setBind1i("Base", "tex0", textures.getTextureUnit("terrain1"));
+    shaders.setBind1i("Base", "tex1", textures.getTextureUnit("terrain2"));
+    shaders.setBind1i("Base", "tex2", textures.getTextureUnit("terrain3"));
 
 }
 
@@ -123,6 +138,14 @@ void EngineManager::OnUpdateWindowEngine() {
     gEventManager.DispatchEvents();
     if (m_inputs->IsKeyPressed(GLFW_KEY_ESCAPE)) {
         m_done = true;
+    }
+
+    if (m_inputs->IsKeyPressed(GLFW_KEY_R)) {
+        shaders.hotReloadAllShaders();
+        shaders.useShaderByName("Base");
+        shaders.setBind1i("Base", "tex0", textures.getTextureUnit("terrain1"));
+        shaders.setBind1i("Base", "tex1", textures.getTextureUnit("terrain2"));
+        shaders.setBind1i("Base", "tex2", textures.getTextureUnit("terrain3"));
     }
 
     m_TimersList.at(0).Update();
@@ -135,13 +158,14 @@ void EngineManager::OnUpdateWindowEngine() {
 
 
     m_fbo.bindFBO();
-    OnUpdateWindow();
-        glUseProgram(shader.getShaderID());
-        glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-        //glDrawArrays(GL_TRIANGLES, 0, 6);
+        OnUpdateWindow();
+
+        textures.bindAllTextures();
+        shaders.useShaderByName("Base");
+
+        glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     m_fbo.unbindFBO();
-    
     
     m_editor.OnRenderUI();
     glfwSwapBuffers(m_window);
@@ -160,9 +184,9 @@ GLFWwindow* EngineManager::getWindow() {
 }
 
 bool EngineManager::getDone() {
-    return m_done;
+    return this->m_done;
 }
 
 void EngineManager::setDone(bool newDone) {
-    this->m_done = m_done;
+    this->m_done = newDone;
 }

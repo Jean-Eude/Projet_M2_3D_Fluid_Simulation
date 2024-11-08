@@ -7,7 +7,12 @@
 #include <Editor.hpp>
 #include <TimerManager.hpp>
 #include <GPUBuffersManager.hpp>
+#include <ShadersManager.hpp>
+#include <TexturesManager.hpp>
+#include <Texture.hpp>
 #include <Shader.hpp>
+
+#include <ComputeShader.hpp>
 
 class EngineManager : public ParserConfig, public Window, public TimerManager, public GPUBuffersManager {
     public:
@@ -38,4 +43,10 @@ class EngineManager : public ParserConfig, public Window, public TimerManager, p
 
         // Shader
         Shader shader;
+        ShadersManager shaders;
+        Texture tex;
+        Texture tex1;
+        ComputeShader cs;
+
+        TexturesManager textures;
 };
