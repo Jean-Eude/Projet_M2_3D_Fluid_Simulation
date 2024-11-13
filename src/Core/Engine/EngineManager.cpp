@@ -16,7 +16,6 @@ unsigned int VBO2, VAO2, EBO2;
 unsigned int VBO3, VAO3, EBO3;
 
 Camera camera;
-bool flag = false;
 
 int numGroupsX = 16;
 int numGroupsY = 16;
@@ -97,10 +96,6 @@ void EngineManager::OnInitWindowEngine() {
     shaders.enqueueShader("Base", FilePath::getFilePath("/Assets/EngineAssets/Shaders/vertex.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/fragCS.glsl"));
     shaders.enqueueShader("Box", FilePath::getFilePath("/Assets/EngineAssets/Shaders/boxVertex.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/boxFragment.glsl"));
 
-    shaders.enqueueShader("Particule", FilePath::getFilePath("/Assets/EngineAssets/Shaders/ParticuleVert.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/ParticuleFrag.glsl"));
-    shaders.enqueueComputeShader("ParticuleC", FilePath::getFilePath("/Assets/EngineAssets/Shaders/ParticleCS.cs"));
-
-
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
     float vertices[] = {
@@ -140,23 +135,20 @@ void EngineManager::OnInitWindowEngine() {
 
 
     // Particules 
+    shaders.enqueueShader("Particule", FilePath::getFilePath("/Assets/EngineAssets/Shaders/ParticuleVert.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/ParticuleFrag.glsl"));
+    shaders.enqueueComputeShader("ParticuleC", FilePath::getFilePath("/Assets/EngineAssets/Shaders/ParticuleCS.cs"));
+
+    shaders.useShaderByName("Particule");
+
     std::vector<Particules> particles(nbParticules);
     std::default_random_engine generator;
     std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
 
-    std::cout << "Nombre de particules : " << particles.size() << std::endl;
-    for (auto& p : particles) {
-        p.pos.x = distribution(generator);
-        p.pos.y = distribution(generator);
-        p.pos.z = distribution(generator);
-        p.dir.x = distribution(generator) * 0.01f;
-        p.dir.y = distribution(generator) * 0.01f;
-        p.dir.z = distribution(generator) * 0.01f;
-    }
 
     ssboM.enqueueSSBO("particleSSBO", GL_DYNAMIC_DRAW, particles);
     std::cout << ssboM.getSSBO_IDByName("particleSSBO") << std::endl;
-    
+    std::cout << ssboM.getBufferUnit("particleSSBO") << std::endl;
+
     glGenVertexArrays(1, &VAO3);
     glBindVertexArray(VAO3);
     glBindBuffer(GL_ARRAY_BUFFER, ssboM.getSSBO_IDByName("particleSSBO"));
@@ -191,16 +183,16 @@ void EngineManager::OnInitWindowEngine() {
         camera.startPos.x = ((mousePosition.x - (m_fbo.getFBOWidth() / 2) ) / (m_fbo.getFBOWidth() / 2)) * camera.radius;
         camera.startPos.y = (((m_fbo.getFBOHeight() / 2) - mousePosition.y) / (m_fbo.getFBOHeight() / 2)) * camera.radius;
         camera.startPos.z = camera.z_axis(camera.startPos.x, camera.startPos.y);
-        flag = true;
+        camera.setFlag(true);
     });
 
     m_inputs->setMouseButtonReleasedListener([&](const MouseButtonReleasedEvent& e) {
         camera.replace();
-        flag = false;
+        camera.setFlag(false);
     });
 
     m_inputs->setMouseMovedListener([&](const MouseMovedEvent& e) {
-        if (flag) {
+        if (camera.getFlag()) {
             camera.currentPos.x = ((e.mouseX - (m_fbo.getFBOWidth() / 2)) / (m_fbo.getFBOWidth() / 2)) * camera.radius;
             camera.currentPos.y = (((m_fbo.getFBOHeight() / 2) - e.mouseY) / (m_fbo.getFBOHeight() / 2)) * camera.radius;
             camera.currentPos.z = camera.z_axis(camera.currentPos.x, camera.currentPos.y);
@@ -209,7 +201,6 @@ void EngineManager::OnInitWindowEngine() {
     });
 
     // Boîte
-
     shaders.useShaderByName("Box");
 
     float boxVertices[] = {
@@ -316,11 +307,15 @@ void EngineManager::OnUpdateWindowEngine() {
         glBindVertexArray(0);
 
         // Particules
+        shaders.useShaderByName("Particule");
+        std::cout << shaders.getShaderIDByName("Particule") << std::endl;
+
         shaders.setNumGroupsComputeShaderByName("ParticuleC", numGroupsX, numGroupsY, numGroupsZ, nbParticules, 1, 1);
         shaders.useComputeShaderByName("ParticuleC", CS_SSBO);
         shaders.setCompBind1f("ParticuleC", "deltaTime", m_TimersList.at(0).getDeltaTime());
 
-        shaders.useShaderByName("Particule");
+        std::cout << m_TimersList.at(0).getDeltaTime() << std::endl;
+        
         glBindVertexArray(VAO3);
         glPointSize(10.0f);
         glDrawArrays(GL_POINTS, 0, nbParticules);

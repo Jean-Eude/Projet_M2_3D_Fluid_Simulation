@@ -1,6 +1,6 @@
 #version 460 core
 
-layout(local_size_x = 1) in;
+layout(local_size_x = 16) in;
 
 struct Particules {
     vec3 pos;

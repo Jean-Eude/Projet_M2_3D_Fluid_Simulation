@@ -76,3 +76,11 @@ void Camera::replace(){
     lastQuaternion.cosine = cosValue_2;
     lastQuaternion.axis = rotationalAxis_2;
 }
+
+void Camera::setFlag(bool newFlag) {
+    this->flag = newFlag;
+}
+
+bool Camera::getFlag() {
+    return this->flag;
+}
