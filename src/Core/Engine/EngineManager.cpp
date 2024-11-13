@@ -12,7 +12,7 @@ bool Window::m_vsync;
 
 
 unsigned int VBO, VAO, EBO;
-ArcballCamera camera;
+Camera camera;
 
 int numGroupsX = (unsigned int)1280/10;
 int numGroupsY = (unsigned int)720/10;
@@ -123,7 +123,7 @@ void EngineManager::OnInitWindowEngine() {
 
 
     textures.enqueueTexture("terrain1", FilePath::getFilePath("/Assets/EngineAssets/Textures/terrain.jpg"), TEX_2D, true, GL_REPEAT, GL_LINEAR);
-    textures.enqueueRawTexture("terrain2", TEX_2D, TEX_RGBA32F, false, 512, 512, true, GL_REPEAT, GL_LINEAR);
+    textures.enqueueRawTexture("terrain2", TEX_2D, TEX_RGBA32F, 512, 512, true, GL_REPEAT, GL_LINEAR);
     textures.enqueueTexture("terrain3", FilePath::getFilePath("/Assets/EngineAssets/Textures/terrain2.jpg"), TEX_2D, true, GL_REPEAT, GL_LINEAR);
 
     shaders.useShaderByName("Base");
@@ -162,10 +162,14 @@ void EngineManager::OnUpdateWindowEngine() {
     glm::mat4 projection = glm::mat4(1.0f);
     projection = glm::perspective(glm::radians(90.0f), static_cast<float>(m_fbo.getFBOWidth()) / m_fbo.getFBOHeight(), 0.1f, 10000.0f);
 
-    glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 1.0f);
+    glm::vec3 cameraPos = glm::vec3(0.5f, 0.5f, 0.5f);
     glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
     glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, up);
+    
+    //glm::mat4 view = glm::mat4(1.0f);
+    //view = glm::translate(view, camera.position); 
+    //view = glm::rotate(view, glm::radians(camera.angle), camera.rotationalAxis);
 
     glm::mat4 mvp = projection * view * model;
     

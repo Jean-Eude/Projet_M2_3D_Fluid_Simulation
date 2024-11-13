@@ -11,9 +11,9 @@
 #include <TexturesManager.hpp>
 #include <Texture.hpp>
 #include <Shader.hpp>
-#include <Camera.hpp>
-
 #include <ComputeShader.hpp>
+#include <SSBO.hpp>
+#include <Camera.hpp>
 
 class EngineManager : public ParserConfig, public Window, public TimerManager, public GPUBuffersManager {
     public:
@@ -50,4 +50,7 @@ class EngineManager : public ParserConfig, public Window, public TimerManager, p
         ComputeShader cs;
 
         TexturesManager textures;
+
+        SSBO ssbo;
+        GPUBuffersManager ssboM;
 };

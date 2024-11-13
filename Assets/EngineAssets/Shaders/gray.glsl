@@ -6,12 +6,11 @@ uniform sampler2D tex1;
 uniform sampler2D tex2;
 uniform sampler2D tex3;
 uniform sampler2D tex4;
+uniform sampler2D tex5;
 
 in vec2 TexCoord;
 
 void main()
 {
-    vec4 color1 = vec4(1.0) - texture(tex0, TexCoord);
-    vec4 color2 = texture(tex1, TexCoord);
-    FragColor = texture(tex2, TexCoord);
+    FragColor = texture(tex1, TexCoord);
 }

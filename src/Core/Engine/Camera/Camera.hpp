@@ -1,12 +1,14 @@
 #include <HeadersBase.hpp>
 
+const float RADIUS = 1.f;
+
 struct Quaternion{
     float cosine;
     glm::vec3 axis;
 
 };
 
-class ArcballCamera{
+class Camera{
 public:
     
     glm::vec3 position = glm::vec3(0.0f, 0.0f, -3.0f);
@@ -23,7 +25,7 @@ public:
     float angle = 180.0f;
     glm::vec3 rotationalAxis = glm::vec3(1.0f, 0.0f, 0.0f);                       
     glm::vec3 rotationalAxis_2;
-    ArcballCamera (){};
+    Camera (){};
     float z_axis(float,float);
     glm::vec3 getUnitVector(glm::vec3);
     float dotProduct();

@@ -29,6 +29,7 @@ void Texture::loadTexture(const std::string& TexPath, TexType type, bool isFlip,
 
     this->mode = mode;
     this->interpolation = interpolation;
+    GLenum dataType = GL_UNSIGNED_BYTE;
 
     if (this->texID == 0) {
         // Créer un nouvel ID
@@ -48,7 +49,8 @@ void Texture::loadTexture(const std::string& TexPath, TexType type, bool isFlip,
         unsigned char *data = stbi_load(this->texPath.c_str(), &width, &height, &nrChannels, 0);
 
         this->width = width;
-        this->height = height;
+        this->height = 0;
+        this->depth = 0;
 
         if (data) {
             GLenum format;
@@ -64,7 +66,7 @@ void Texture::loadTexture(const std::string& TexPath, TexType type, bool isFlip,
                 return; 
             }
 
-            glTexImage1D(this->target, 0, format, width, 0, format, GL_UNSIGNED_BYTE, data);
+            glTexImage1D(this->target, 0, format, width, 0, format, dataType, data);
             glGenerateMipmap(this->target);
         } else {
             //std::cout << "Failed to load texture" << std::endl;
@@ -73,7 +75,6 @@ void Texture::loadTexture(const std::string& TexPath, TexType type, bool isFlip,
     } else if(this->target == GL_TEXTURE_2D) {
         glTexParameteri(this->target, GL_TEXTURE_WRAP_S, this->mode);
         glTexParameteri(this->target, GL_TEXTURE_WRAP_T, this->mode);
-
         glTexParameteri(this->target, GL_TEXTURE_MIN_FILTER, this->interpolation);
         glTexParameteri(this->target, GL_TEXTURE_MAG_FILTER, this->interpolation);
 
@@ -83,6 +84,7 @@ void Texture::loadTexture(const std::string& TexPath, TexType type, bool isFlip,
 
         this->width = width;
         this->height = height;
+        this->depth = 0;
 
         if (data) {
             GLenum format;
@@ -98,7 +100,7 @@ void Texture::loadTexture(const std::string& TexPath, TexType type, bool isFlip,
                 return; 
             }
 
-            glTexImage2D(this->target, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+            glTexImage2D(this->target, 0, format, width, height, 0, format, dataType, data);
             glGenerateMipmap(this->target);
         } else {
             //std::cout << "Failed to load texture" << std::endl;
@@ -108,16 +110,12 @@ void Texture::loadTexture(const std::string& TexPath, TexType type, bool isFlip,
         glTexParameteri(this->target, GL_TEXTURE_WRAP_S, this->mode);
         glTexParameteri(this->target, GL_TEXTURE_WRAP_T, this->mode);
         glTexParameteri(this->target, GL_TEXTURE_WRAP_R, this->mode);
-        
         glTexParameteri(this->target, GL_TEXTURE_MIN_FILTER, this->interpolation);
         glTexParameteri(this->target, GL_TEXTURE_MAG_FILTER, this->interpolation);
 
         int width, height, depth, nrChannels;
         stbi_set_flip_vertically_on_load(isFlip);
         unsigned char *data = stbi_load(this->texPath.c_str(), &width, &height, &nrChannels, 0);
-
-        this->width = width;
-        this->height = height;
 
         if (data) {
             GLenum format;
@@ -134,7 +132,12 @@ void Texture::loadTexture(const std::string& TexPath, TexType type, bool isFlip,
             }
 
             depth = 1;
-            glTexImage3D(this->target, 0, format, width, height, depth, 0, format, GL_UNSIGNED_BYTE, data);
+
+            this->width = width;
+            this->height = height;
+            this->depth = depth;
+
+            glTexImage3D(this->target, 0, format, width, height, depth, 0, format, dataType, data);
             glGenerateMipmap(this->target);
         } else {
             //std::cout << "Failed to load texture" << std::endl;
@@ -145,9 +148,8 @@ void Texture::loadTexture(const std::string& TexPath, TexType type, bool isFlip,
     unbindTexture();
 }
 
-void Texture::loadRawTexture(TexType type, TexInternalFormat texInternal, bool isCompute, GLuint unit, int width, int height, bool isFlip, GLint mode, GLint interpolation) {
+void Texture::loadRawTexture(TexType type, TexInternalFormat texInternal, int width, int height, bool isFlip, GLint mode, GLint interpolation) {
     this->type = type;
-    this->isCompute = isCompute;
 
     // Ordre important ici !
     this->isFlip = isFlip;
@@ -183,7 +185,6 @@ void Texture::loadRawTexture(TexType type, TexInternalFormat texInternal, bool i
     
     unsigned char* data = NULL;
     // Test
-    
     /*
     data = new unsigned char[width * height * 4]; // RGBA
     for (int i = 0; i < width * height * 4; i += 4) {
@@ -231,12 +232,10 @@ void Texture::loadRawTexture(TexType type, TexInternalFormat texInternal, bool i
             }
         }
 
+        this->format = inter;
+
         glTexImage1D(this->target, 0, inter, width, 0, format, dataType, data);
         glGenerateMipmap(this->target);
-
-        if(isCompute == true) {
-            glBindImageTexture(unit, this->texID, 0, GL_FALSE, 0, GL_READ_WRITE, inter);
-        }
     } else if(this->target == GL_TEXTURE_2D) {
         GLenum dataType, format;
 
@@ -250,10 +249,13 @@ void Texture::loadRawTexture(TexType type, TexInternalFormat texInternal, bool i
 
             if(texInternal == TEX_R32F) {
                 format = GL_RED;
+                inter = GL_R32F;
             } else if(texInternal == TEX_RGB32F) {
                 format = GL_RGB;
+                inter = GL_RGB32F;
             } else if(texInternal == TEX_RGBA32F) {
                 format = GL_RGBA;
+                inter = GL_RGBA32F;
             }
         }
 
@@ -262,19 +264,19 @@ void Texture::loadRawTexture(TexType type, TexInternalFormat texInternal, bool i
 
             if(texInternal == TEX_R32UI) {
                 format = GL_RED;
+                inter = GL_R32UI;
             } else if(texInternal == TEX_RGB32UI) {
                 format = GL_RGB;
+                inter = GL_RGB32UI;
             } else if(texInternal == TEX_RGBA32UI) {
                 format = GL_RGBA;
+                inter = GL_RGBA32UI;
             }
         }
 
-        glTexImage2D(this->target, 0, inter, width, height, 0, format, dataType, data);
-        glGenerateMipmap(this->target);
+        this->format = inter;
 
-        if(isCompute == true) {
-            glBindImageTexture(unit, this->texID, 0, GL_FALSE, 0, GL_READ_WRITE, inter);
-        }
+        glTexImage2D(this->target, 0, inter, width, height, 0, format, dataType, data);
     } else if(this->target == GL_TEXTURE_3D) {
         GLenum dataType, format;
 
@@ -289,10 +291,13 @@ void Texture::loadRawTexture(TexType type, TexInternalFormat texInternal, bool i
 
             if(texInternal == TEX_R32F) {
                 format = GL_RED;
+                inter = GL_R32F;
             } else if(texInternal == TEX_RGB32F) {
                 format = GL_RGB;
+                inter = GL_RGB32F;
             } else if(texInternal == TEX_RGBA32F) {
                 format = GL_RGBA;
+                inter = GL_RGBA32F;
             }
         }
 
@@ -301,20 +306,21 @@ void Texture::loadRawTexture(TexType type, TexInternalFormat texInternal, bool i
 
             if(texInternal == TEX_R32UI) {
                 format = GL_RED;
+                inter = GL_R32UI;
             } else if(texInternal == TEX_RGB32UI) {
                 format = GL_RGB;
+                inter = GL_RGB32UI;
             } else if(texInternal == TEX_RGBA32UI) {
                 format = GL_RGBA;
+                inter = GL_RGBA32UI;
             }
         }
+
+        this->format = inter;
 
         int depth = 1;
         glTexImage3D(this->target, 0, inter, width, height, depth, 0, format, dataType, data);
         glGenerateMipmap(this->target);
-
-        if(isCompute == true) {
-            glBindImageTexture(unit, this->texID, 0, GL_FALSE, 0, GL_READ_WRITE, inter);    
-        }
     }
 
     delete[] data;
@@ -328,6 +334,15 @@ void Texture::unbindTexture() {
 void Texture::bindTexture(unsigned int unitTex, GLuint texID) {
     glActiveTexture(GL_TEXTURE0 + unitTex);
     glBindTexture(this->target, texID);
+}
+
+void Texture::bindRawTexture(unsigned int unitBinding, unsigned int texID, int level, bool isLayered, int layer, GLenum access) {
+    this->level = level;
+    this->isLayered = isLayered;
+    this->layer = layer;
+    this->access = access;
+
+    glBindImageTexture(unitBinding, texID, level, isLayered, layer, access, this->format);
 }
 
 GLuint Texture::getTexID() {
@@ -366,6 +381,10 @@ void Texture::setName(const std::string& name) {
     m_name = name;
 }
 
+TexInternalFormat Texture::getInternalFormat() {
+    return this->internal;
+}
+
 int Texture::getWidth() {
     return this->width;
 }
@@ -374,11 +393,18 @@ int Texture::getHeight() {
     return this->height;
 }
 
-bool Texture::getIsCompute() {
-    return this->isCompute;
+int Texture::getDepth() {
+    return this->depth;
 }
 
-TexInternalFormat Texture::getInternalFormat() {
-    return this->internal;
+void Texture::setWidth(int width) {
+    this->width = width;
 }
 
+void Texture::setHeight(int height) {
+    this->height = height;
+}
+
+void Texture::setDepth(int depth) {
+    this->depth = depth;
+}

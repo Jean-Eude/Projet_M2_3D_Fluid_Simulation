@@ -20,14 +20,15 @@ enum TexInternalFormat {
 
 class Texture {
     public:
-        Texture() : texID(0) {}
+        Texture() : texID(0), width(512), height(512), depth(1) {}
         ~Texture();
     
         void loadTexture(const std::string& TexPath, TexType type, bool isFlip, GLint mode, GLint interpolation);
-        void loadRawTexture(TexType type, TexInternalFormat texInternal, bool isCompute, GLuint unit, int width, int height, bool isFlip, GLint mode, GLint interpolation);
+        void loadRawTexture(TexType type, TexInternalFormat texInternal, int width, int height, bool isFlip, GLint mode, GLint interpolation);
 
         void unbindTexture();
         void bindTexture(unsigned int unitTex, GLuint texID);
+        void bindRawTexture(unsigned int unitBinding, unsigned int texID, int level, bool isLayered, int layer, GLenum access);
 
         unsigned int getTexID();
         std::string getPath();
@@ -42,7 +43,10 @@ class Texture {
 
         int getWidth();
         int getHeight();
-        bool getIsCompute();
+        int getDepth();
+        void setWidth(int width);
+        void setHeight(int height);
+        void setDepth(int depth);
 
         TexInternalFormat getInternalFormat();
         
@@ -57,8 +61,13 @@ class Texture {
         GLint mode;
         GLint interpolation;
 
-        int width, height;
-        bool isCompute;
+        int level; 
+        bool isLayered;
+        int layer;
+        GLenum access;
+        GLenum format;
+
+        int width, height, depth;
 
         std::string m_name;
 };

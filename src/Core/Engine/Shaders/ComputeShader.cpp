@@ -9,17 +9,16 @@ void ComputeShader::loadComputeShader(const std::string& compute) {
 
     PrintWorkGroupsCapabilities();
 
-    this->m_compute = compute; 
-
+    this->m_compute = compute;
     std::string computeCode;
     std::ifstream cShaderFile(this->m_compute);
 
     cShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     try {
-        std::stringstream cShaderStream;
-        cShaderStream << cShaderFile.rdbuf();
+        std::stringstream cShadertream;
+        cShadertream << cShaderFile.rdbuf();
         cShaderFile.close();
-        computeCode = cShaderStream.str();
+        computeCode = cShadertream.str();
     } catch (std::ifstream::failure& e) {
         std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: " << e.what() << std::endl;
         return;
@@ -27,34 +26,26 @@ void ComputeShader::loadComputeShader(const std::string& compute) {
 
     const char* cShaderCode = computeCode.c_str();
 
-    // Compile Compute Shader
+    // Compute Shader
+    int success;
+    char infoLog[512];
     this->m_computeID = glCreateShader(GL_COMPUTE_SHADER);
     glShaderSource(this->m_computeID, 1, &cShaderCode, NULL);
     glCompileShader(this->m_computeID);
-
-    // Check for compilation errors
-    int success;
-    char infoLog[512];
     glGetShaderiv(this->m_computeID, GL_COMPILE_STATUS, &success);
     if (!success) {
         glGetShaderInfoLog(this->m_computeID, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::COMPUTE::COMPILATION_FAILED\n" << infoLog << std::endl;
-        glDeleteShader(this->m_computeID);
-        return;
     }
 
-    // Link the Shader Program
+    // Linking the Shader
     this->m_computeShaderID = glCreateProgram();
-    glAttachShader(this->m_computeShaderID, this->m_computeID);
+    glAttachShader(this->m_computeShaderID, m_computeID);
     glLinkProgram(this->m_computeShaderID);
-
     glGetProgramiv(this->m_computeShaderID, GL_LINK_STATUS, &success);
     if (!success) {
         glGetProgramInfoLog(this->m_computeShaderID, 512, NULL, infoLog);
-        std::cout << "ERROR::COMPUTESHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-        glDeleteProgram(this->m_computeShaderID);
-        glDeleteShader(this->m_computeID);
-        return;
+        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
     }
 
     glDeleteShader(this->m_computeID);
@@ -71,10 +62,23 @@ void ComputeShader::unloadShader() {
     }
 }
 
-void ComputeShader::useShader(GLuint numGroupsX, GLuint numGroupsY, GLuint numGroupsZ) {
+void ComputeShader::useShader(CS_type type) {
+    this->type = type;
+
     glUseProgram(this->m_computeShaderID);
-    glDispatchCompute(numGroupsX, numGroupsY, numGroupsZ);
-    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);     
+
+    // Permet de tout couvrir
+    int nX = (int)ceil((float)(this->ElementsX + numGroupsX - 1) / numGroupsX);
+    int nY = (int)ceil((float)(this->ElementsY + numGroupsY - 1) / numGroupsY);
+    int nZ = (int)ceil((float)(this->ElementsZ + numGroupsZ - 1) / numGroupsZ);
+
+    glDispatchCompute(nX, nY, nZ);
+
+    if(type == CS_TEXTURE) {
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+    } else {
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    }
 }
 
 unsigned int ComputeShader::getComputeID() {
@@ -95,6 +99,52 @@ void ComputeShader::setName(const std::string& name) {
 
 std::string& ComputeShader::getComputePath() {
     return this->m_compute;
+}
+
+void ComputeShader::setNumGroups(GLuint numGroupsX, GLuint numGroupsY, GLuint numGroupsZ, int ElementsX, int ElementsY, int ElementsZ) {
+    setNumGroupsX(numGroupsX);
+    setNumGroupsY(numGroupsY);
+    setNumGroupsZ(numGroupsZ);
+
+    this->ElementsX = ElementsX;
+    this->ElementsY = ElementsY;
+    this->ElementsZ = ElementsZ;
+}
+
+GLuint ComputeShader::getNumGroupsX() {
+    return this->numGroupsX;
+}
+
+GLuint ComputeShader::getNumGroupsY() {
+    return this->numGroupsY;
+}
+
+GLuint ComputeShader::getNumGroupsZ() {
+    return this->numGroupsZ;
+}
+
+void ComputeShader::setNumGroupsX(GLuint numGroupsX) {
+    this->numGroupsX = numGroupsX;
+}
+
+void ComputeShader::setNumGroupsY(GLuint numGroupsY) {
+    this->numGroupsY = numGroupsY;
+}
+
+void ComputeShader::setNumGroupsZ(GLuint numGroupsZ) {
+    this->numGroupsZ = numGroupsZ;
+}
+
+int ComputeShader::getElementsX() {
+    return this->ElementsX;
+}
+
+int ComputeShader::getElementsY() {
+    return this->ElementsY;
+}
+
+int ComputeShader::getElementsZ() {
+    return this->ElementsZ;
 }
 
 void ComputeShader::PrintWorkGroupsCapabilities() {

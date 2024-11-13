@@ -105,21 +105,66 @@ void ShadersManager::hotReloadAllComputeShaders() {
     } 
 }
 
-void ShadersManager::useComputeShaderByName(const std::string& name, GLuint numGroupsX, GLuint numGroupsY, GLuint numGroupsZ) {
+void ShadersManager::useComputeShaderByName(const std::string& name, CS_type type) {
     for (auto& shader : computeShaderQueue) {
         if (shader->getName() == name) {
-            shader->useShader(numGroupsX, numGroupsY, numGroupsZ);
-            std::cout << computeShaderQueue.size() << std::endl;
+            shader->useShader(type);
             break;
         }
     }
 }
 
+void ShadersManager::setNumGroupsComputeShaderByName(const std::string& name, GLuint numGroupsX, GLuint numGroupsY, GLuint numGroupsZ, int ElementsX, int ElementsY, int ElementsZ) {
+    for (auto& shader : computeShaderQueue) {
+        if (shader->getName() == name) {
+            shader->setNumGroups(numGroupsX, numGroupsY, numGroupsZ, ElementsX, ElementsY, ElementsZ);
+            break;
+        }
+    }
+}
+
+void ShadersManager::setNumGroupsAllComputeShader(GLuint numGroupsX, GLuint numGroupsY, GLuint numGroupsZ, int ElementsX, int ElementsY, int ElementsZ) {
+    for (auto& shader : computeShaderQueue) {
+        shader->setNumGroups(numGroupsX, numGroupsY, numGroupsZ, ElementsX, ElementsY, ElementsZ);
+    } 
+}
+
+int ShadersManager::getNumGroupsXComputeShaderByName(const std::string& name) {
+    for (auto& shader : computeShaderQueue) {
+        if (shader->getName() == name) {
+            shader->getNumGroupsX();
+        }
+    }
+}
+
+int ShadersManager::getNumGroupsYComputeShaderByName(const std::string& name) {
+    for (auto& shader : computeShaderQueue) {
+        if (shader->getName() == name) {
+            shader->getNumGroupsY();
+        }
+    }
+}
+
+int ShadersManager::getNumGroupsZComputeShaderByName(const std::string& name) {
+    for (auto& shader : computeShaderQueue) {
+        if (shader->getName() == name) {
+            shader->getNumGroupsZ();
+        }
+    }
+}
 
 unsigned int ShadersManager::getShaderIDByName(const std::string& name) {
     for (auto& shader : shaderQueue) {
         if (shader->getName() == name) {
             return shader->getShaderID();
+        }
+    }
+}
+
+unsigned int ShadersManager::getComputeShaderIDByName(const std::string& name) {
+    for (auto& shader : computeShaderQueue) {
+        if (shader->getName() == name) {
+            return shader->getComputeShaderID();
         }
     }
 }
@@ -204,7 +249,6 @@ void ShadersManager::setBind4fv(const std::string& name, const GLchar* VarName, 
         }
     }
 }
-
 
 void ShadersManager::setCompBind1f(const std::string& name, const GLchar* VarName, GLfloat v0) {
     for (auto& shader : computeShaderQueue) {

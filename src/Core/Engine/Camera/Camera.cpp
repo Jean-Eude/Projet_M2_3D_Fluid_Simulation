@@ -1,12 +1,12 @@
 #include <Camera.hpp>
 
-float ArcballCamera::z_axis(float x, float y){
+float Camera::z_axis(float x, float y){
     float z = 0; 
     if(sqrt((x * x) + (y * y)) <= RADIUS) z = (float)sqrt((RADIUS * RADIUS) - (x * x) - (y * y)); 
     return z;
 }
 
-glm::vec3 ArcballCamera::getUnitVector(glm::vec3 vectr){
+glm::vec3 Camera::getUnitVector(glm::vec3 vectr){
     float magnitude1;
     glm::vec3 unitVector; 
     magnitude1 = (vectr.x * vectr.x) + (vectr.y * vectr.y) + (vectr.z * vectr.z); 
@@ -24,12 +24,12 @@ glm::vec3 ArcballCamera::getUnitVector(glm::vec3 vectr){
     return unitVector;    
 }
 
-float ArcballCamera::dotProduct(){
+float Camera::dotProduct(){
     float result = (startPosUnitVector.x * currentPosUnitVector.x) + (startPosUnitVector.y * currentPosUnitVector.y) + (startPosUnitVector.z * currentPosUnitVector.z);
     return result;
 }
 
-void ArcballCamera::rotation(){
+void Camera::rotation(){
     startPosUnitVector = getUnitVector(startPos);
     currentPosUnitVector = getUnitVector(currentPos);
     currentQuaternion.axis = glm::cross(startPos, currentPos);
@@ -72,7 +72,7 @@ void ArcballCamera::rotation(){
     rotationalAxis.z = rotationalAxis_2.z / sin((angle / 2) * 3.1416 / 180);
 }
 
-void ArcballCamera::replace(){
+void Camera::replace(){
     lastQuaternion.cosine = cosValue_2;
     lastQuaternion.axis = rotationalAxis_2;
 }
