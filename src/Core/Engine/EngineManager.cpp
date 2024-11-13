@@ -134,27 +134,14 @@ void EngineManager::OnInitWindowEngine() {
     shaders.setBind1i("Base", "tex1", textures.getTextureUnit("terrain2"));
     shaders.setBind1i("Base", "tex2", textures.getTextureUnit("terrain3"));
 
-    /*m_inputs->setKeyPressedListener([&](const KeyPressedEvent& e) {
-        std::cout << e.ToString() << '\n';
-    });
-    m_inputs->setKeyReleasedListener([&](const KeyReleasedEvent& e) {
-        std::cout << e.ToString() << '\n';
-    });
-    m_inputs->setMouseMovedListener([&](const MouseMovedEvent& e) {
-        std::cout << e.ToString() << '\n';
-    });
     m_inputs->setMouseScrolledListener([&](const MouseScrolledEvent& e) {
-        std::cout << e.ToString() << '\n';
-    });
-    m_inputs->setMouseButtonPressedListener([&](const MouseButtonPressedEvent& e) {
-        std::cout << e.ToString() << '\n';
-    });
-    m_inputs->setMouseButtonReleasedListener([&](const MouseButtonReleasedEvent& e) {
-        std::cout << e.ToString() << '\n';
-    });*/
-
-    m_inputs->setMouseScrolledListener([&](const MouseScrolledEvent& e) {
-        camera.position -= glm::normalize(camera.position) * 0.075f * e.yOffset;
+        glm::vec3 cameraDirection = glm::normalize(camera.position);
+        camera.position -= 0.075f * e.yOffset * cameraDirection;
+        
+        float length = glm::length(camera.position);
+        if (length < 0.1f) {
+            camera.position = 0.1f * cameraDirection;
+        }
     });
 
     GLFWwindow* window = getWindow();
