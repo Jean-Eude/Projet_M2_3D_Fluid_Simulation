@@ -2,7 +2,7 @@
 
 float Camera::z_axis(float x, float y){
     float z = 0; 
-    if(sqrt((x * x) + (y * y)) <= RADIUS) z = (float)sqrt((RADIUS * RADIUS) - (x * x) - (y * y)); 
+    if(sqrt((x * x) + (y * y)) <= radius) z = (float)sqrt((radius * radius) - (x * x) - (y * y)); 
     return z;
 }
 

@@ -12,7 +12,9 @@ bool Window::m_vsync;
 
 
 unsigned int VBO, VAO, EBO;
+unsigned int VBO2, VAO2, EBO2;
 Camera camera;
+bool flag = false;
 
 int numGroupsX = (unsigned int)1280/10;
 int numGroupsY = (unsigned int)720/10;
@@ -83,6 +85,7 @@ void EngineManager::OnInitWindowEngine() {
     m_TimersList.at(0).Start();
     
     shaders.enqueueShader("Base", FilePath::getFilePath("/Assets/EngineAssets/Shaders/vertex.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/fragCS.glsl"));
+    shaders.enqueueShader("Box", FilePath::getFilePath("/Assets/EngineAssets/Shaders/boxVertex.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/boxFragment.glsl"));
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
@@ -131,6 +134,100 @@ void EngineManager::OnInitWindowEngine() {
     shaders.setBind1i("Base", "tex1", textures.getTextureUnit("terrain2"));
     shaders.setBind1i("Base", "tex2", textures.getTextureUnit("terrain3"));
 
+    /*m_inputs->setKeyPressedListener([&](const KeyPressedEvent& e) {
+        std::cout << e.ToString() << '\n';
+    });
+    m_inputs->setKeyReleasedListener([&](const KeyReleasedEvent& e) {
+        std::cout << e.ToString() << '\n';
+    });
+    m_inputs->setMouseMovedListener([&](const MouseMovedEvent& e) {
+        std::cout << e.ToString() << '\n';
+    });
+    m_inputs->setMouseScrolledListener([&](const MouseScrolledEvent& e) {
+        std::cout << e.ToString() << '\n';
+    });
+    m_inputs->setMouseButtonPressedListener([&](const MouseButtonPressedEvent& e) {
+        std::cout << e.ToString() << '\n';
+    });
+    m_inputs->setMouseButtonReleasedListener([&](const MouseButtonReleasedEvent& e) {
+        std::cout << e.ToString() << '\n';
+    });*/
+
+    m_inputs->setMouseScrolledListener([&](const MouseScrolledEvent& e) {
+        camera.position -= glm::normalize(camera.position) * 0.075f * e.yOffset;
+    });
+
+    GLFWwindow* window = getWindow();
+    m_inputs->setMouseButtonPressedListener([&](const MouseButtonPressedEvent& e) {
+        glm::vec2 mousePosition = m_inputs->getMousePosition();
+        camera.startPos.x = ((mousePosition.x - (m_fbo.getFBOWidth() / 2) ) / (m_fbo.getFBOWidth() / 2)) * camera.radius;
+        camera.startPos.y = (((m_fbo.getFBOHeight() / 2) - mousePosition.y) / (m_fbo.getFBOHeight() / 2)) * camera.radius;
+        camera.startPos.z = camera.z_axis(camera.startPos.x, camera.startPos.y);
+        flag = true;
+    });
+
+    m_inputs->setMouseButtonReleasedListener([&](const MouseButtonReleasedEvent& e) {
+        camera.replace();
+        flag = false;
+    });
+
+    m_inputs->setMouseMovedListener([&](const MouseMovedEvent& e) {
+        if (flag) {
+            camera.currentPos.x = ((e.mouseX - (m_fbo.getFBOWidth() / 2)) / (m_fbo.getFBOWidth() / 2)) * camera.radius;
+            camera.currentPos.y = (((m_fbo.getFBOHeight() / 2) - e.mouseY) / (m_fbo.getFBOHeight() / 2)) * camera.radius;
+            camera.currentPos.z = camera.z_axis(camera.currentPos.x, camera.currentPos.y);
+            camera.rotation();
+        }
+    });
+
+    // Boîte
+
+    shaders.useShaderByName("Box");
+
+    float boxVertices[] = {
+        -0.5f, -0.5f, -0.5f,
+        0.5f, -0.5f, -0.5f,
+        0.5f,  0.5f, -0.5f,
+        -0.5f,  0.5f, -0.5f,
+        -0.5f, -0.5f,  0.5f,
+        0.5f, -0.5f,  0.5f,
+        0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f
+    };
+
+    unsigned int boxIndices[] = {
+        0, 1,
+        1, 2,
+        2, 3,
+        3, 0,
+        4, 5,
+        5, 6,
+        6, 7,
+        7, 4,
+        0, 4,
+        1, 5,
+        2, 6,
+        3, 7
+    };
+
+    glGenVertexArrays(1, &VAO2);
+    glGenBuffers(1, &VBO2);
+    glGenBuffers(1, &EBO2);
+
+    glBindVertexArray(VAO2);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(boxVertices), boxVertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO2);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(boxIndices), boxIndices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
 }
 
 void EngineManager::OnUpdateWindowEngine() {
@@ -160,30 +257,38 @@ void EngineManager::OnUpdateWindowEngine() {
     glm::mat4 model = glm::mat4(1.0f);
 
     glm::mat4 projection = glm::mat4(1.0f);
-    projection = glm::perspective(glm::radians(90.0f), static_cast<float>(m_fbo.getFBOWidth()) / m_fbo.getFBOHeight(), 0.1f, 10000.0f);
-
-    glm::vec3 cameraPos = glm::vec3(0.5f, 0.5f, 0.5f);
-    glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-    glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, up);
+    projection = glm::perspective(glm::radians(70.0f), static_cast<float>(m_fbo.getFBOWidth()) / m_fbo.getFBOHeight(), 0.1f, 10000.0f);
     
-    //glm::mat4 view = glm::mat4(1.0f);
-    //view = glm::translate(view, camera.position); 
-    //view = glm::rotate(view, glm::radians(camera.angle), camera.rotationalAxis);
+    glm::mat4 view = glm::mat4(1.0f);
+    view = glm::translate(view, camera.position); 
+    view = glm::rotate(view, glm::radians(camera.angle), camera.rotationalAxis);
 
     glm::mat4 mvp = projection * view * model;
-    
-    shaders.setBind4fv("Base", "mvp", 1, GL_FALSE, glm::value_ptr(mvp));
 
     m_fbo.bindFBO();
         OnUpdateWindow();
 
         textures.bindAllTextures();
+
+        // Box
+        shaders.useShaderByName("Box");
+        shaders.setBind4fv("Box", "mvp", 1, GL_FALSE, glm::value_ptr(mvp));
+        glBindVertexArray(VAO2);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glBindVertexArray(0);
+
+        // Base
         shaders.useShaderByName("Base");
+        shaders.setBind4fv("Base", "mvp", 1, GL_FALSE, glm::value_ptr(mvp));
 
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
     m_fbo.unbindFBO();
+
+    
     
     m_editor.OnRenderUI();
     glfwSwapBuffers(m_window);

@@ -25,13 +25,21 @@ bool Inputs::IsKeyPressed(int keyCode) const {
 // Key
 void Inputs::OnKeyPressed(const KeyPressedEvent& e) {
     m_pressedKeys.insert(e.key);
+    for (auto& listener : keyPressedListeners) {
+        listener(e);
+    }
+
     // Pas besoin de timing pour les logs des inputs
-    LogsManager::enqueueConsoleLogsInit(e.ToString(), LogLevel::DEBUG);
+    //LogsManager::enqueueConsoleLogsInit(e.ToString(), LogLevel::DEBUG);
 }
 
 void Inputs::OnKeyReleased(const KeyReleasedEvent& e) {
     m_pressedKeys.erase(e.key);
-    LogsManager::enqueueConsoleLogsInit(e.ToString(), LogLevel::DEBUG);
+    for (auto& listener : keyReleasedListeners) {
+        listener(e);
+    }
+
+    //LogsManager::enqueueConsoleLogsInit(e.ToString(), LogLevel::DEBUG);
 }
 
 void Inputs::TriggerKeyPressedEvent(int keyCode, int repeatCount) {
@@ -59,10 +67,20 @@ void Inputs::setKeyCallback() {
     glfwSetWindowUserPointer(m_window, this);
 }
 
+void Inputs::setKeyPressedListener(const Inputs::EventListener<KeyPressedEvent>& listener) {
+    keyPressedListeners.push_back(listener);
+}
+
+void Inputs::setKeyReleasedListener(const Inputs::EventListener<KeyReleasedEvent>& listener) {
+    keyReleasedListeners.push_back(listener);
+}
 
 // Mouse
 void Inputs::OnMouseMoved(const MouseMovedEvent& e) {
-    //LogsManager::enqueueConsoleLogsInit(e.ToString(), LogLevel::DEBUG);
+    m_mousePosition = glm::vec2(e.mouseX, e.mouseY);
+    for (auto& listener : mouseMoveListeners) {
+        listener(e);
+    }
 }
 
 void Inputs::TriggerMouseMovedEvent(float x, float y) {
@@ -81,8 +99,14 @@ void Inputs::setMouseMovedCallback() {
     glfwSetWindowUserPointer(m_window, this);
 }
 
+void Inputs::setMouseMovedListener(const Inputs::EventListener<MouseMovedEvent>& listener) {
+    mouseMoveListeners.push_back(listener);
+}
+
 void Inputs::OnMouseScrolled(const MouseScrolledEvent& e) {
-    //LogsManager::enqueueConsoleLogsInit(e.ToString(), LogLevel::DEBUG);
+    for (auto& listener : mouseScrolledListeners) {
+        listener(e);
+    }
 }
 
 void Inputs::TriggerMouseScrolledEvent(float x, float y) {
@@ -101,8 +125,14 @@ void Inputs::setMouseScrolledCallback() {
     glfwSetWindowUserPointer(m_window, this);
 }
 
+void Inputs::setMouseScrolledListener(const Inputs::EventListener<MouseScrolledEvent>& listener) {
+    mouseScrolledListeners.push_back(listener);
+}
+
 void Inputs::OnMouseButtonPressed(const MouseButtonPressedEvent& e) {
-    //LogsManager::enqueueConsoleLogsInit(e.ToString(), LogLevel::DEBUG);
+    for (auto& listener : mouseButtonPressedListeners) {
+        listener(e);
+    }
 }
 
 void Inputs::TriggerMouseButtonPressedEvent(int button) {
@@ -112,7 +142,9 @@ void Inputs::TriggerMouseButtonPressedEvent(int button) {
 
 
 void Inputs::OnMouseButtonReleased(const MouseButtonReleasedEvent& e) {
-    //LogsManager::enqueueConsoleLogsInit(e.ToString(), LogLevel::DEBUG);
+    for (auto& listener : mouseButtonReleasedListeners) {
+        listener(e);
+    }
 }
 
 void Inputs::TriggerMouseButtonReleasedEvent(int button) {
@@ -133,4 +165,16 @@ void Inputs::setMouseButtonCallback() {
     });
 
     glfwSetWindowUserPointer(m_window, this);
+}
+
+void Inputs::setMouseButtonPressedListener(const Inputs::EventListener<MouseButtonPressedEvent>& listener) {
+    mouseButtonPressedListeners.push_back(listener);
+}
+
+void Inputs::setMouseButtonReleasedListener(const Inputs::EventListener<MouseButtonReleasedEvent>& listener) {
+    mouseButtonReleasedListeners.push_back(listener);
+}
+
+glm::vec2 Inputs::getMousePosition() const {
+    return m_mousePosition;
 }

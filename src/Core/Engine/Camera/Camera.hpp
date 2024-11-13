@@ -1,7 +1,5 @@
 #include <HeadersBase.hpp>
 
-const float RADIUS = 1.f;
-
 struct Quaternion{
     float cosine;
     glm::vec3 axis;
@@ -20,6 +18,7 @@ public:
     Quaternion currentQuaternion;
     Quaternion lastQuaternion = {0.0f, glm::vec3(1.0f, 0.0f, 0.0f)};
     
+    float radius = 1.0f;
     float cosValue, cosValue_2;
     float theta;
     float angle = 180.0f;

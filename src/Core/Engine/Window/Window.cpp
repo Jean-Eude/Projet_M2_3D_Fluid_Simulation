@@ -76,6 +76,9 @@ void Window::OnInitWindow(int m_width, int m_height, std::string m_title, unsign
     } else {
         LogsManager::enqueueConsoleLogsInit("GLAD a été initialisé correctement !", LogLevel::OK);
     }
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
 }
 
 void Window::OnUpdateWindow() {
