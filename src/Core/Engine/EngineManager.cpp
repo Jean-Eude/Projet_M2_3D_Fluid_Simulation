@@ -13,12 +13,22 @@ bool Window::m_vsync;
 
 unsigned int VBO, VAO, EBO;
 unsigned int VBO2, VAO2, EBO2;
+unsigned int VBO3, VAO3, EBO3;
+
 Camera camera;
 bool flag = false;
 
-int numGroupsX = (unsigned int)1280/10;
-int numGroupsY = (unsigned int)720/10;
+int numGroupsX = 16;
+int numGroupsY = 16;
 int numGroupsZ = 1;
+
+
+struct Particules {
+    glm::vec3 pos;
+    glm::vec3 dir;
+};
+
+int nbParticules = 100;
 
 EngineManager::EngineManager() {
     // Valeurs de base au cas où le fichier de config ne fonctionnerait pass
@@ -87,6 +97,10 @@ void EngineManager::OnInitWindowEngine() {
     shaders.enqueueShader("Base", FilePath::getFilePath("/Assets/EngineAssets/Shaders/vertex.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/fragCS.glsl"));
     shaders.enqueueShader("Box", FilePath::getFilePath("/Assets/EngineAssets/Shaders/boxVertex.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/boxFragment.glsl"));
 
+    shaders.enqueueShader("Particule", FilePath::getFilePath("/Assets/EngineAssets/Shaders/ParticuleVert.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/ParticuleFrag.glsl"));
+    shaders.enqueueComputeShader("ParticuleC", FilePath::getFilePath("/Assets/EngineAssets/Shaders/ParticleCS.cs"));
+
+
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
     float vertices[] = {
@@ -125,6 +139,33 @@ void EngineManager::OnInitWindowEngine() {
     glBindVertexArray(0); 
 
 
+    // Particules 
+    std::vector<Particules> particles(nbParticules);
+    std::default_random_engine generator;
+    std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
+
+    std::cout << "Nombre de particules : " << particles.size() << std::endl;
+    for (auto& p : particles) {
+        p.pos.x = distribution(generator);
+        p.pos.y = distribution(generator);
+        p.pos.z = distribution(generator);
+        p.dir.x = distribution(generator) * 0.01f;
+        p.dir.y = distribution(generator) * 0.01f;
+        p.dir.z = distribution(generator) * 0.01f;
+    }
+
+    ssboM.enqueueSSBO("particleSSBO", GL_DYNAMIC_DRAW, particles);
+    std::cout << ssboM.getSSBO_IDByName("particleSSBO") << std::endl;
+    
+    glGenVertexArrays(1, &VAO3);
+    glBindVertexArray(VAO3);
+    glBindBuffer(GL_ARRAY_BUFFER, ssboM.getSSBO_IDByName("particleSSBO"));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Particules), (void*)0);
+    glEnableVertexAttribArray(0);
+    glBindVertexArray(0);
+
+
+
     textures.enqueueTexture("terrain1", FilePath::getFilePath("/Assets/EngineAssets/Textures/terrain.jpg"), TEX_2D, true, GL_REPEAT, GL_LINEAR);
     textures.enqueueRawTexture("terrain2", TEX_2D, TEX_RGBA32F, 512, 512, true, GL_REPEAT, GL_LINEAR);
     textures.enqueueTexture("terrain3", FilePath::getFilePath("/Assets/EngineAssets/Textures/terrain2.jpg"), TEX_2D, true, GL_REPEAT, GL_LINEAR);
@@ -133,25 +174,6 @@ void EngineManager::OnInitWindowEngine() {
     shaders.setBind1i("Base", "tex0", textures.getTextureUnit("terrain1"));
     shaders.setBind1i("Base", "tex1", textures.getTextureUnit("terrain2"));
     shaders.setBind1i("Base", "tex2", textures.getTextureUnit("terrain3"));
-
-    /*m_inputs->setKeyPressedListener([&](const KeyPressedEvent& e) {
-        std::cout << e.ToString() << '\n';
-    });
-    m_inputs->setKeyReleasedListener([&](const KeyReleasedEvent& e) {
-        std::cout << e.ToString() << '\n';
-    });
-    m_inputs->setMouseMovedListener([&](const MouseMovedEvent& e) {
-        std::cout << e.ToString() << '\n';
-    });
-    m_inputs->setMouseScrolledListener([&](const MouseScrolledEvent& e) {
-        std::cout << e.ToString() << '\n';
-    });
-    m_inputs->setMouseButtonPressedListener([&](const MouseButtonPressedEvent& e) {
-        std::cout << e.ToString() << '\n';
-    });
-    m_inputs->setMouseButtonReleasedListener([&](const MouseButtonReleasedEvent& e) {
-        std::cout << e.ToString() << '\n';
-    });*/
 
     m_inputs->setMouseScrolledListener([&](const MouseScrolledEvent& e) {
         glm::vec3 cameraDirection = glm::normalize(camera.position);
@@ -292,9 +314,21 @@ void EngineManager::OnUpdateWindowEngine() {
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
+
+        // Particules
+        shaders.setNumGroupsComputeShaderByName("ParticuleC", numGroupsX, numGroupsY, numGroupsZ, nbParticules, 1, 1);
+        shaders.useComputeShaderByName("ParticuleC", CS_SSBO);
+        shaders.setCompBind1f("ParticuleC", "deltaTime", m_TimersList.at(0).getDeltaTime());
+
+        shaders.useShaderByName("Particule");
+        glBindVertexArray(VAO3);
+        glPointSize(10.0f);
+        glDrawArrays(GL_POINTS, 0, nbParticules);
+        glBindVertexArray(0); 
+
     m_fbo.unbindFBO();
 
-    
+
     
     m_editor.OnRenderUI();
     glfwSwapBuffers(m_window);
