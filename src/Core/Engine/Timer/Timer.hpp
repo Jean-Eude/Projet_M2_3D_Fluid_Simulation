@@ -28,6 +28,8 @@ class Timer {
         double getMSPerUpdate();
         std::string getName();
 
+        void setAcc(double newAcc);
+
         // Metrics
         void UpdateDeltaTime();
 

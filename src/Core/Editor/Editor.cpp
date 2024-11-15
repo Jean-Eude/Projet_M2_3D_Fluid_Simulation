@@ -77,5 +77,6 @@ std::vector<LayerEditor*> Editor::CreateLayers(LayerStackEditor& stackEditor) {
         new LogsEditorLayer("Layer_Logs"),
         new ToolsEditorLayer("Layer_Tools"),
         new ViewportEditorLayer("Layer_Viewport"),
+        new ParticlesManager("Layer_Particles"),
     };
 }

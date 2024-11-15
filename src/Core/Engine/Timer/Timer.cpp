@@ -100,6 +100,10 @@ std::string Timer::getName() {
     return name;
 }
 
+void Timer::setAcc(double newAcc) {
+    this->m_Acc = newAcc;
+}
+
 // Metrics
 void Timer::UpdateDeltaTime() {
     m_Acc -= m_MS_BIS_Per_Update;
