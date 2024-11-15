@@ -1,19 +1,23 @@
-#version 460 core
+#version 430
 
-layout(local_size_x = 16) in;
+layout (local_size_x = 512, local_size_y = 1, local_size_z = 1) in;
 
-struct Particules {
-    vec3 pos;
-    vec3 dir;
+layout(std430, binding = 0) buffer positionSSBO {
+    vec3 positions[];
 };
 
-layout(std430, binding = 0) buffer Positions {
-    Particules particles[];
+layout(std430, binding = 1) buffer directionSSBO {
+    vec3 directions[];
 };
 
-uniform float deltaTime;
+uniform float deltatime;
 
 void main() {
-    uint index = gl_GlobalInvocationID.x;
-    particles[index].pos += particles[index].dir * deltaTime;
+    uint id = gl_GlobalInvocationID.x;
+
+    // Mettre à jour la position des particules
+    positions[id] += directions[id] * deltatime;
+
+    // Vous pouvez également modifier la direction ici, si nécessaire
+    // directions[id].y -= 9.81 * deltatime; // Exemple de gravité
 }

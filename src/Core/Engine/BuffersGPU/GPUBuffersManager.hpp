@@ -20,7 +20,13 @@ class GPUBuffersManager {
         template <typename T>
         void linkSSBOAll(GLenum mode, std::vector<T>& outputData);
 
-        unsigned int getSSBO_IDByName(const std::string& name);
+        template <typename T>
+        void UpdateSBOByName(const std::string& name, const std::vector<T>& newData);
+
+        template <typename T>
+        void UpdateSBOAll(const std::vector<T>& newData);
+
+        GLuint getSSBO_IDByName(const std::string& name);
         GLenum getSSBO_UsageByName(const std::string& name);
         GLenum getSSBO_ModeByName(const std::string& name);
 
@@ -69,5 +75,23 @@ void GPUBuffersManager::linkSSBOAll(GLenum mode, std::vector<T>& outputData) {
         auto& buffer = pair.second;
         auto unit = bufferUnits[pair.first];
         buffer->linkSSBO_Datas(mode, outputData);
+    }
+}
+
+template <typename T>
+void GPUBuffersManager::UpdateSBOByName(const std::string& name, const std::vector<T>& newData) {
+    auto it = buffersQueue.find(name);
+    if (it != buffersQueue.end()) {
+        auto& buffer = it->second;
+        buffer->updateSSBO(newData);
+    } 
+}
+
+template <typename T>
+void GPUBuffersManager::UpdateSBOAll(const std::vector<T>& newData) {
+    for (auto& pair : buffersQueue) {
+        auto& buffer = pair.second;
+        auto unit = bufferUnits[pair.first];
+        buffer->updateSSBO(newData);
     }
 }

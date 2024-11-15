@@ -13,6 +13,9 @@ class SSBO {
         template <typename T>
         void linkSSBO_Datas(GLenum mode, std::vector<T>& outputData);
 
+        template <typename T>
+        void updateSSBO(const std::vector<T>& newData);
+
         void bindSSBO();
         void unbindSSBO();
 
@@ -44,6 +47,8 @@ void SSBO::createSSBO(GLuint unit, GLenum usage, const std::vector<T>& data) {
     bindSSBO();
     glBufferData(GL_SHADER_STORAGE_BUFFER, this->dataSize, data.data(), usage);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, unit, this->SSBO_id);
+
+    //unbindSSBO();
 }
 
 template <typename T>
@@ -62,5 +67,21 @@ void SSBO::linkSSBO_Datas(GLenum mode, std::vector<T>& outputData) {
         std::cerr << "Erreur lors du mappage du SSBO." << std::endl;
     }
 
+    unbindSSBO();
+}
+
+template <typename T>
+void SSBO::updateSSBO(const std::vector<T>& newData) {
+    bindSSBO();
+
+    size_t newDataSize = newData.size() * sizeof(T);
+
+    if (newDataSize != this->dataSize) {
+        std::cerr << "Erreur : la taille des nouvelles données ne correspond pas à la taille du SSBO." << std::endl;
+        unbindSSBO();
+        return;
+    }
+
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, newDataSize, newData.data());
     unbindSSBO();
 }

@@ -18,7 +18,7 @@ void GPUBuffersManager::dequeueAllSSBO() {
     bufferUnits.clear();
 }
 
-unsigned int GPUBuffersManager::getSSBO_IDByName(const std::string& name) {
+GLuint GPUBuffersManager::getSSBO_IDByName(const std::string& name) {
     auto it = buffersQueue.find(name);
     if (it != buffersQueue.end()) {
         return it->second->getSSBO_ID();
