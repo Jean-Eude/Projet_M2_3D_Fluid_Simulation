@@ -201,14 +201,14 @@ void EngineManager::OnUpdateWindowEngine() {
 
     float deltaTime = static_cast<float>(m_TimersList.at(0).getDeltaTime());
 
-    ssboM.bindBufferBaseByName("particulesSSBO");
-    //glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssboM.getSSBO_IDByName("particulesSSBO"));
+    GLuint ssboID = ssboM.getSSBO_IDByName("particulesSSBO");
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssboID);
     shaders.useComputeShaderByName("ParticuleCS", CS_SSBO);
     shaders.setCompBind1f("ParticuleCS", "deltaTime", deltaTime);
 
-    // Déja fait dans useComputeShaderByName
-    //glDispatchCompute((nbParticules + numGroupsX-1) / numGroupsX, 1, 1);
-    //glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    // Lancer le Compute Shader
+    glDispatchCompute((nbParticules + numGroupsX-1) / numGroupsX, 1, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 
     // Rendu des particules

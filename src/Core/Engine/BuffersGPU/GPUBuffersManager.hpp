@@ -26,6 +26,10 @@ class GPUBuffersManager {
         template <typename T>
         void UpdateSBOAll(const std::vector<T>& newData);
 
+        void bindBufferBaseByName(const std::string& name);
+        void bindBufferBaseAll();
+
+
         GLuint getSSBO_IDByName(const std::string& name);
         GLenum getSSBO_UsageByName(const std::string& name);
         GLenum getSSBO_ModeByName(const std::string& name);

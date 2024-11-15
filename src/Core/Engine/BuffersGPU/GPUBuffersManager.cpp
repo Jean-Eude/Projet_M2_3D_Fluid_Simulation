@@ -6,6 +6,8 @@ void GPUBuffersManager::dequeueSSBO(const std::string& name) {
     auto it = buffersQueue.find(name);
 
     if (it != buffersQueue.end()) {
+        GLuint ssboID = it->second->getSSBO_ID();
+        glDeleteBuffers(1, &ssboID);
         buffersQueue.erase(it);
         bufferUnits.erase(name);
     } else {
@@ -14,8 +16,43 @@ void GPUBuffersManager::dequeueSSBO(const std::string& name) {
 }
 
 void GPUBuffersManager::dequeueAllSSBO() {
+    for (auto& pair : buffersQueue) {
+        GLuint ssboID = pair.second->getSSBO_ID();
+        glDeleteBuffers(1, &ssboID);
+    }
     buffersQueue.clear();
     bufferUnits.clear();
+}
+
+void GPUBuffersManager::bindBufferBaseByName(const std::string& name) {
+    auto it = buffersQueue.find(name);
+    if (it != buffersQueue.end()) {
+        auto& buffer = it->second;
+        auto unitIt = bufferUnits.find(name);
+        if (unitIt != bufferUnits.end()) {
+            GLuint unit = unitIt->second;
+            buffer->bindBufferBase(unit);
+        } else {
+            std::cerr << "Erreur : Unité du buffer '" << name << "' non trouvée." << std::endl;
+        }
+    } else {
+        std::cerr << "Erreur : Buffer nommé '" << name << "' non trouvé." << std::endl;
+    }
+}
+
+void GPUBuffersManager::bindBufferBaseAll() {
+    for (const auto& pair : buffersQueue) {
+        const std::string& name = pair.first;
+        const auto& buffer = pair.second;
+
+        auto unitIt = bufferUnits.find(name);
+        if (unitIt != bufferUnits.end()) {
+            GLuint unit = unitIt->second;
+            buffer->bindBufferBase(unit); // Lie le buffer à son unité
+        } else {
+            std::cerr << "Erreur : Unité du buffer '" << name << "' non trouvée." << std::endl;
+        }
+    }
 }
 
 GLuint GPUBuffersManager::getSSBO_IDByName(const std::string& name) {

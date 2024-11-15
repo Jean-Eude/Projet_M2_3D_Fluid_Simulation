@@ -19,6 +19,8 @@ class SSBO {
         void bindSSBO();
         void unbindSSBO();
 
+        void bindBufferBase(GLuint unit);
+
         GLuint getSSBO_ID();
         GLenum getSSBO_Usage();
         GLenum getSSBO_Mode();
@@ -46,9 +48,10 @@ void SSBO::createSSBO(GLuint unit, GLenum usage, const std::vector<T>& data) {
     glGenBuffers(1, &this->SSBO_id);
     bindSSBO();
     glBufferData(GL_SHADER_STORAGE_BUFFER, this->dataSize, data.data(), usage);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, unit, this->SSBO_id);
+    bindBufferBase(unit);
+    //glBindBufferBase(GL_SHADER_STORAGE_BUFFER, unit, this->SSBO_id);
 
-    //unbindSSBO();
+    unbindSSBO();
 }
 
 template <typename T>

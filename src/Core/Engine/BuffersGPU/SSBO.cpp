@@ -12,6 +12,10 @@ void SSBO::unbindSSBO() {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
+void SSBO::bindBufferBase(GLuint unit) {
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, unit, this->SSBO_id);
+}
+
 std::string& SSBO::getName() {
     return m_name;
 }

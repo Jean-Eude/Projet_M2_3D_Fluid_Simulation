@@ -71,7 +71,8 @@
     "numeric": "cpp",
     "span": "cpp",
     "cfenv": "cpp",
-    "codecvt": "cpp"
+    "codecvt": "cpp",
+    "__nullptr": "cpp"
   },
   "C_Cpp_Runner.msvcBatchPath": ""
 }

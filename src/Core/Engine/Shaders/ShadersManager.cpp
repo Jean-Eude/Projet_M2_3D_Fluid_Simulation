@@ -253,7 +253,7 @@ void ShadersManager::setBind4fv(const std::string& name, const GLchar* VarName, 
 void ShadersManager::setCompBind1f(const std::string& name, const GLchar* VarName, GLfloat v0) {
     for (auto& shader : computeShaderQueue) {
         if (shader->getName() == name) {
-            glUniform1f(glGetUniformLocation(shader->getComputeID(), VarName), v0);
+            glUniform1f(glGetUniformLocation(shader->getComputeShaderID(), VarName), v0);
             break;
         }
     }
@@ -262,7 +262,7 @@ void ShadersManager::setCompBind1f(const std::string& name, const GLchar* VarNam
 void ShadersManager::setCompBind1i(const std::string& name, const GLchar* VarName, GLint v0) {
     for (auto& shader : computeShaderQueue) {
         if (shader->getName() == name) {
-            glUniform1i(glGetUniformLocation(shader->getComputeID(), VarName), v0);
+            glUniform1i(glGetUniformLocation(shader->getComputeShaderID(), VarName), v0);
             break;
         }
     }
@@ -271,7 +271,7 @@ void ShadersManager::setCompBind1i(const std::string& name, const GLchar* VarNam
 void ShadersManager::setCompBind2f(const std::string& name, const GLchar* VarName, GLfloat v0, GLfloat v1) {
     for (auto& shader : computeShaderQueue) {
         if (shader->getName() == name) {
-            glUniform2f(glGetUniformLocation(shader->getComputeID(), VarName), v0, v1);
+            glUniform2f(glGetUniformLocation(shader->getComputeShaderID(), VarName), v0, v1);
             break;
         }
     }
@@ -280,7 +280,7 @@ void ShadersManager::setCompBind2f(const std::string& name, const GLchar* VarNam
 void ShadersManager::setCompBind2f(const std::string& name, const GLchar* VarName, glm::vec2 v) {
     for (auto& shader : computeShaderQueue) {
         if (shader->getName() == name) {
-            glUniform2f(glGetUniformLocation(shader->getComputeID(), VarName), v.x, v.y);
+            glUniform2f(glGetUniformLocation(shader->getComputeShaderID(), VarName), v.x, v.y);
             break;
         }
     }
@@ -289,7 +289,7 @@ void ShadersManager::setCompBind2f(const std::string& name, const GLchar* VarNam
 void ShadersManager::setCompBind3f(const std::string& name, const GLchar* VarName, GLfloat v0, GLfloat v1, GLfloat v2) {
     for (auto& shader : computeShaderQueue) {
         if (shader->getName() == name) {
-            glUniform3f(glGetUniformLocation(shader->getComputeID(), VarName), v0, v1, v2);
+            glUniform3f(glGetUniformLocation(shader->getComputeShaderID(), VarName), v0, v1, v2);
             break;
         }
     }
@@ -298,7 +298,7 @@ void ShadersManager::setCompBind3f(const std::string& name, const GLchar* VarNam
 void ShadersManager::setCompBind3f(const std::string& name, const GLchar* VarName, glm::vec3 v) {
     for (auto& shader : computeShaderQueue) {
         if (shader->getName() == name) {
-            glUniform3f(glGetUniformLocation(shader->getComputeID(), VarName), v.x, v.y, v.z);
+            glUniform3f(glGetUniformLocation(shader->getComputeShaderID(), VarName), v.x, v.y, v.z);
             break;
         }
     }
@@ -307,7 +307,7 @@ void ShadersManager::setCompBind3f(const std::string& name, const GLchar* VarNam
 void ShadersManager::setCompBind4f(const std::string& name, const GLchar* VarName, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3) {
     for (auto& shader : computeShaderQueue) {
         if (shader->getName() == name) {
-            glUniform4f(glGetUniformLocation(shader->getComputeID(), VarName), v0, v1, v2, v3);
+            glUniform4f(glGetUniformLocation(shader->getComputeShaderID(), VarName), v0, v1, v2, v3);
             break;
         }
     }
@@ -316,7 +316,7 @@ void ShadersManager::setCompBind4f(const std::string& name, const GLchar* VarNam
 void ShadersManager::setCompBind4f(const std::string& name, const GLchar* VarName, glm::vec4 v) {
     for (auto& shader : computeShaderQueue) {
         if (shader->getName() == name) {
-            glUniform4f(glGetUniformLocation(shader->getComputeID(), VarName), v.x, v.y, v.z, v.w);
+            glUniform4f(glGetUniformLocation(shader->getComputeShaderID(), VarName), v.x, v.y, v.z, v.w);
             break;
         }
     }
@@ -325,7 +325,7 @@ void ShadersManager::setCompBind4f(const std::string& name, const GLchar* VarNam
 void ShadersManager::setCompBind4fv(const std::string& name, const GLchar* VarName, GLsizei count, GLboolean transpose, const GLfloat *value) {
     for (auto& shader : computeShaderQueue) {
         if (shader->getName() == name) {
-            glUniformMatrix4fv(glGetUniformLocation(shader->getComputeID(), VarName), count, transpose, value);
+            glUniformMatrix4fv(glGetUniformLocation(shader->getComputeShaderID(), VarName), count, transpose, value);
             break;
         }
     }
