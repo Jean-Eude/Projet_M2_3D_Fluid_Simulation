@@ -79,6 +79,9 @@ void Window::OnInitWindow(int m_width, int m_height, std::string m_title, unsign
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
+
+    // Pour modifier la taille des points dans les shaders
+    glEnable(GL_PROGRAM_POINT_SIZE);
 }
 
 void Window::OnUpdateWindow() {

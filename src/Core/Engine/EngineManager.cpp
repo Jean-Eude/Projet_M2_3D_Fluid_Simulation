@@ -21,15 +21,22 @@ int numGroupsY = 1;
 int numGroupsZ = 1;
 
 
+// Alignement de 16 octets (obligatoire) pour une structure
 struct Particule {
     glm::vec3 pos;
     glm::vec3 dir;
     glm::vec3 velocity;
     float scale;
     float life;
+    float padding[2];
 };
 
-int nbParticules = 100000;
+struct AABB {
+    glm::vec3 min;
+    glm::vec3 max;
+};
+
+int nbParticules = 10;
 std::vector<Particule> particles(nbParticules);
 
 EngineManager::EngineManager() {
@@ -171,6 +178,9 @@ void EngineManager::OnInitWindowEngine() {
         3, 7
     };
 
+    glm::vec minAABB = glm::vec3(-0.5, -0.5, -0.5);
+    glm::vec maxAABB = glm::vec3(0.5, 0.5, 0.5);
+
     glGenVertexArrays(1, &VAO2);
     glGenBuffers(1, &VBO2);
     glGenBuffers(1, &EBO2);
@@ -195,13 +205,18 @@ void EngineManager::OnInitWindowEngine() {
     shaders.setNumGroupsComputeShaderByName("ParticuleCS", numGroupsX, numGroupsY, numGroupsZ, nbParticules, 1, 1);
 
     shaders.useComputeShaderByName("ParticuleCS", CS_SSBO);    
+    shaders.setCompBind3f("ParticuleCS", "minAABB", minAABB);
+    shaders.setCompBind3f("ParticuleCS", "maxAABB", maxAABB);
 
+    shaders.useShaderByName("Particule");    
+    shaders.setBind3f("Particule", "minAABB", minAABB);
+    shaders.setBind3f("Particule", "maxAABB", maxAABB);
 
     for (auto& p : particles) {
         p.pos = glm::vec3(0., 0., 0.);
         p.dir = glm::vec3(0., 0., 0.);
-        p.velocity = glm::vec3(0., 0., 0.);
-        p.scale = 1.;
+        p.velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+        p.scale = 10.f;
         p.life = 1.;
     }
 
@@ -291,7 +306,7 @@ void EngineManager::OnUpdateWindowEngine() {
         shaders.setCompBind1f("ParticuleCS", "deltaTime", deltaTime);
         shaders.setCompBind3f("ParticuleCS", "gravity", glm::vec3(0.0f, 9.8f, 0.0f));
         shaders.setCompBind3f("ParticuleCS", "spawnPos", glm::vec3(0.0f, 0.0f, 0.0f));
-        shaders.setCompBind3f("ParticuleCS", "initialVelocity", glm::vec3(0.0f, -25.0f, 0.0f));
+        shaders.setCompBind3f("ParticuleCS", "initialVelocity", glm::vec3(0.0f, -0.75f, 0.0f));
         shaders.setCompBind1f("ParticuleCS", "lifeSpan", 10.0f);
 
         m_TimersList.at(0).UpdateDeltaTime();
@@ -341,7 +356,7 @@ void EngineManager::OnUpdateWindowEngine() {
         shaders.useShaderByName("Particule");
         shaders.setBind4fv("Particule", "mvp", 1, GL_FALSE, glm::value_ptr(mvp));
         glBindVertexArray(VAO3);
-        glPointSize(5.0f);
+        //glPointSize(5.0f);
         glDrawArrays(GL_POINTS, 0, nbParticules);
         glBindVertexArray(0);
 

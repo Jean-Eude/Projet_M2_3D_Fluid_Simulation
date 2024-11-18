@@ -47,7 +47,10 @@ void SSBO::createSSBO(GLuint unit, GLenum usage, const std::vector<T>& data) {
 
     glGenBuffers(1, &this->SSBO_id);
     bindSSBO();
+
+    // Allocation de la mémoire sur le GPU
     glBufferData(GL_SHADER_STORAGE_BUFFER, this->dataSize, data.data(), usage);
+    //glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(T), data.data());
     bindBufferBase(unit);
     //glBindBufferBase(GL_SHADER_STORAGE_BUFFER, unit, this->SSBO_id);
 
