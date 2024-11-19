@@ -35,4 +35,6 @@ class Camera{
 
         void setFlag(bool newFlag);
         bool getFlag();
+
+        
 };

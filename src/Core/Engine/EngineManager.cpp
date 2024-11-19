@@ -36,7 +36,7 @@ struct alignas(16) Particule {
 };
 
 
-int nbParticules = 20;
+int nbParticules = 1000;
 std::vector<Particule> particles(nbParticules);
 
 glm::vec minAABB = glm::vec3(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
@@ -234,12 +234,20 @@ void EngineManager::OnInitWindowEngine() {
     shaders.setBind3f("Particule", "minAABB", minAABB);
     shaders.setBind3f("Particule", "maxAABB", maxAABB);
 
-    for (auto& p : particles) {
-        p.pos = glm::vec3(0.f, 0.f, 0.f);
-        p.dir = glm::vec3(0.f, 0.f, 0.f);
-        p.velocity = glm::vec3(0.0f, 0.0f, 0.0f);
-        p.scale = 10.f;
-        p.life = 1.;
+    for(size_t i = 0; i < nbParticules; i++) {
+        float t = static_cast<float>(i) / (nbParticules - 1);
+        float padding = 0.03;
+
+        particles[i].pos = glm::vec3(
+            (minAABB.x + padding) + static_cast<float>(rand()) / RAND_MAX * ((maxAABB.x - padding) - (minAABB.x + padding)),
+            (minAABB.y + padding) + static_cast<float>(rand()) / RAND_MAX * ((maxAABB.y - padding) - (minAABB.y + padding)),
+            (minAABB.z + padding) + static_cast<float>(rand()) / RAND_MAX * ((maxAABB.z - padding) - (minAABB.z + padding))
+        );
+
+        particles[i].dir = glm::vec3(0.f, 0.f, 0.f);
+        particles[i].velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+        particles[i].scale = 10.f;
+        particles[i].life = 1.;
     }
 
     ssboM.enqueueSSBO("particulesSSBO", GL_DYNAMIC_DRAW, particles);
@@ -291,7 +299,6 @@ void EngineManager::OnInitWindowEngine() {
             camera.rotation();
         }
     });
-
 }
 
 void EngineManager::OnUpdateWindowEngine() {
@@ -305,9 +312,15 @@ void EngineManager::OnUpdateWindowEngine() {
     if (m_inputs->IsKeyPressed(GLFW_KEY_R)) {
         shaders.hotReloadAllComputeShaders();
         shaders.useComputeShaderByName("ParticuleCS");
+        shaders.setCompBind3f("ParticuleCS", "minAABB", minAABB);
+        shaders.setCompBind3f("ParticuleCS", "maxAABB", maxAABB);
+        shaders.memoryBarrierByName("ParticuleCS", CS_SSBO);
 
         shaders.reloadAllShaders();
         shaders.useShaderByName("Particule");
+        shaders.setBind3f("Particule", "minAABB", minAABB);
+        shaders.setBind3f("Particule", "maxAABB", maxAABB);
+
         shaders.useShaderByName("Box");
         shaders.useShaderByName("Base");
 
@@ -326,6 +339,7 @@ void EngineManager::OnUpdateWindowEngine() {
         ssboM.bindBufferBaseByName("particulesSSBO");
         shaders.useComputeShaderByName("ParticuleCS");
         shaders.setCompBind1f("ParticuleCS", "deltaTime", deltaTime);
+        shaders.setBind3f("ParticuleCS", "camPos", camera.position);
         shaders.memoryBarrierByName("ParticuleCS", CS_SSBO);
 
         m_TimersList.at(0).UpdateDeltaTime();

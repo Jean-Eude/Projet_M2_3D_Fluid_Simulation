@@ -24,14 +24,14 @@ uniform float deltaTime;
 void main() {
     uint id = gl_GlobalInvocationID.x;
 
-    // Vérifier si l'ID dépasse le nombre de particules (comme en CUDA)
+    // Vérifie si l'ID dépasse le nombre de particules (comme en CUDA)
     if (id >= particles.length()) return;
 
     Particule p = particles[id];
 
     // ------------------------------------------------------------------ //
 
-
+    
 
     // ------------------------------------------------------------------ //
 
