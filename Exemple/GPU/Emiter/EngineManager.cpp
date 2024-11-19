@@ -21,26 +21,23 @@ int numGroupsY = 1;
 int numGroupsZ = 1;
 
 
-// Alignement de 16 octets (obligatoire) pour une structure (CS et VS)
-struct alignas(16) Particule {
-    glm::vec3 pos;       
+// Alignement de 16 octets (obligatoire) pour une structure
+struct Particule {
+    glm::vec3 pos;
+    glm::vec3 dir;
     glm::vec3 velocity;
-    glm::vec3 dir;       
-    float scale;         
+    float scale;
     float life;
-
-    // 8 bytes = 4 bytes * 3 float
-    float padding1;      
-    float padding2;     
-    float padding3;
+    float padding[2];
 };
 
+struct AABB {
+    glm::vec3 min;
+    glm::vec3 max;
+};
 
-int nbParticules = 20;
+int nbParticules = 10;
 std::vector<Particule> particles(nbParticules);
-
-glm::vec minAABB = glm::vec3(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
-glm::vec maxAABB = glm::vec3(-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity());
 
 EngineManager::EngineManager() {
     // Valeurs de base au cas où le fichier de config ne fonctionnerait pass
@@ -155,9 +152,6 @@ void EngineManager::OnInitWindowEngine() {
     // Boîte
     shaders.useShaderByName("Box");
 
-    std::cout << "Size of Particule: " << sizeof(Particule) << std::endl;
-
-    /*
     float boxVertices[] = {
         -0.5f, -0.5f, -0.5f,
         0.5f, -0.5f, -0.5f,
@@ -167,26 +161,7 @@ void EngineManager::OnInitWindowEngine() {
         0.5f, -0.5f,  0.5f,
         0.5f,  0.5f,  0.5f,
         -0.5f,  0.5f,  0.5f
-    };*/
-
-    std::vector<glm::vec3> boxVertices = {
-        glm::vec3(-0.5f, -0.5f, -0.5f),
-        glm::vec3(0.5f, -0.5f, -0.5f),
-        glm::vec3(0.5f,  0.5f, -0.5f),
-        glm::vec3(-0.5f,  0.5f, -0.5f),
-        glm::vec3(-0.5f, -0.5f,  0.5f),
-        glm::vec3(0.5f, -0.5f,  0.5f),
-        glm::vec3(0.5f,  0.5f,  0.5f),
-        glm::vec3(-0.5f,  0.5f,  0.5f),
     };
-
-    for (glm::vec3& AABB : boxVertices) {
-        minAABB = glm::min(minAABB, AABB);
-        maxAABB = glm::max(maxAABB, AABB);
-    }
-
-    std::cout << minAABB.x << minAABB.y << minAABB.z << std::endl;
-    std::cout << maxAABB.x << maxAABB.y << maxAABB.z << std::endl;
 
     unsigned int boxIndices[] = {
         0, 1,
@@ -203,6 +178,9 @@ void EngineManager::OnInitWindowEngine() {
         3, 7
     };
 
+    glm::vec minAABB = glm::vec3(-0.5, -0.5, -0.5);
+    glm::vec maxAABB = glm::vec3(0.5, 0.5, 0.5);
+
     glGenVertexArrays(1, &VAO2);
     glGenBuffers(1, &VBO2);
     glGenBuffers(1, &EBO2);
@@ -210,7 +188,7 @@ void EngineManager::OnInitWindowEngine() {
     glBindVertexArray(VAO2);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO2);
-    glBufferData(GL_ARRAY_BUFFER, boxVertices.size() * sizeof(glm::vec3), boxVertices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(boxVertices), boxVertices, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO2);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(boxIndices), boxIndices, GL_STATIC_DRAW);
@@ -226,7 +204,7 @@ void EngineManager::OnInitWindowEngine() {
     shaders.enqueueComputeShader("ParticuleCS", FilePath::getFilePath("/Assets/EngineAssets/Shaders/ParticuleCS.cs"));
     shaders.setNumGroupsComputeShaderByName("ParticuleCS", numGroupsX, numGroupsY, numGroupsZ, nbParticules, 1, 1);
 
-    shaders.useComputeShaderByName("ParticuleCS");
+    shaders.useComputeShaderByName("ParticuleCS", CS_SSBO);    
     shaders.setCompBind3f("ParticuleCS", "minAABB", minAABB);
     shaders.setCompBind3f("ParticuleCS", "maxAABB", maxAABB);
 
@@ -235,8 +213,8 @@ void EngineManager::OnInitWindowEngine() {
     shaders.setBind3f("Particule", "maxAABB", maxAABB);
 
     for (auto& p : particles) {
-        p.pos = glm::vec3(0.f, 0.f, 0.f);
-        p.dir = glm::vec3(0.f, 0.f, 0.f);
+        p.pos = glm::vec3(0., 0., 0.);
+        p.dir = glm::vec3(0., 0., 0.);
         p.velocity = glm::vec3(0.0f, 0.0f, 0.0f);
         p.scale = 10.f;
         p.life = 1.;
@@ -304,7 +282,7 @@ void EngineManager::OnUpdateWindowEngine() {
 
     if (m_inputs->IsKeyPressed(GLFW_KEY_R)) {
         shaders.hotReloadAllComputeShaders();
-        shaders.useComputeShaderByName("ParticuleCS");
+        shaders.useComputeShaderByName("ParticuleCS", CS_SSBO);
 
         shaders.reloadAllShaders();
         shaders.useShaderByName("Particule");
@@ -324,13 +302,34 @@ void EngineManager::OnUpdateWindowEngine() {
         // MAJ de la logique
         float deltaTime = static_cast<float>(m_TimersList.at(0).getDeltaTime());
         ssboM.bindBufferBaseByName("particulesSSBO");
-        shaders.useComputeShaderByName("ParticuleCS");
+        shaders.useComputeShaderByName("ParticuleCS", CS_SSBO);
         shaders.setCompBind1f("ParticuleCS", "deltaTime", deltaTime);
-        shaders.memoryBarrierByName("ParticuleCS", CS_SSBO);
+        shaders.setCompBind3f("ParticuleCS", "gravity", glm::vec3(0.0f, 9.8f, 0.0f));
+        shaders.setCompBind3f("ParticuleCS", "spawnPos", glm::vec3(0.0f, 0.0f, 0.0f));
+        shaders.setCompBind3f("ParticuleCS", "initialVelocity", glm::vec3(0.0f, -20.75f, 0.0f));
+        shaders.setCompBind1f("ParticuleCS", "lifeSpan", 10.0f);
 
         m_TimersList.at(0).UpdateDeltaTime();
     }
 
+    std::vector<Particule> debugParticles(nbParticules);
+
+    // Mapper le SSBO pour lire les données
+    ssboM.linkSSBOByName("particulesSSBO", GL_READ_ONLY, debugParticles);
+
+    // Afficher les particules
+    if (debugParticles.size() > 50) {
+        const auto& p = debugParticles[50]; // Index 50 (51ᵉ particule)
+
+        // Condition : afficher seulement si la particule vient d'être lancée
+        if (p.life == 15 && p.life > 0) { // Elle vient d'être réinitialisée
+            std::cout << "Particle 50 launched: Position = (" << p.pos.x << ", " << p.pos.y << ", " << p.pos.z << ")"
+                    << ", Velocity = (" << p.velocity.x << ", " << p.velocity.y << ", " << p.velocity.z << ")"
+                    << ", Life = " << p.life << std::endl;
+        }
+    } else {
+        std::cerr << "Error: Less than 51 particles exist." << std::endl;
+    }
     
     // Others
     m_editor.OnUpdateUI();
@@ -339,6 +338,7 @@ void EngineManager::OnUpdateWindowEngine() {
     //glDispatchCompute((nbParticules + numGroupsX-1) / numGroupsX, 1, 1);
     //glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
+
     // Rendu des particules
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 projection = glm::perspective(glm::radians(70.0f), static_cast<float>(m_fbo.getFBOWidth()) / m_fbo.getFBOHeight(), 0.1f, 1000.0f);
@@ -346,7 +346,6 @@ void EngineManager::OnUpdateWindowEngine() {
     view = glm::translate(view, camera.position); 
     view = glm::rotate(view, glm::radians(camera.angle), camera.rotationalAxis);
     glm::mat4 mvp = projection * view * model;
-
 
     m_fbo.bindFBO();
         OnUpdateWindow();   
@@ -380,6 +379,7 @@ void EngineManager::OnUpdateWindowEngine() {
     m_fbo.unbindFBO();
 
 
+    
     m_editor.OnRenderUI();
     glfwSwapBuffers(m_window);
 }

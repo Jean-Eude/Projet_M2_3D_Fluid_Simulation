@@ -62,10 +62,12 @@ void ComputeShader::unloadShader() {
     }
 }
 
-void ComputeShader::useShader(CS_type type) {
-    this->type = type;
-
+void ComputeShader::useShader() {
     glUseProgram(this->m_computeShaderID);
+}
+
+void ComputeShader::memoryBarrier(CS_type type) {
+    this->type = type;
 
     // Permet de tout couvrir
     int nX = (int)ceil((float)(this->ElementsX + numGroupsX - 1) / numGroupsX);

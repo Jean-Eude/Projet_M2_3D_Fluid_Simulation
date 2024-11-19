@@ -105,10 +105,19 @@ void ShadersManager::hotReloadAllComputeShaders() {
     } 
 }
 
-void ShadersManager::useComputeShaderByName(const std::string& name, CS_type type) {
+void ShadersManager::useComputeShaderByName(const std::string& name) {
     for (auto& shader : computeShaderQueue) {
         if (shader->getName() == name) {
-            shader->useShader(type);
+            shader->useShader();
+            break;
+        }
+    }
+}
+
+void ShadersManager::memoryBarrierByName(const std::string& name, CS_type type) {
+    for (auto& shader : computeShaderQueue) {
+        if (shader->getName() == name) {
+            shader->memoryBarrier(type);
             break;
         }
     }

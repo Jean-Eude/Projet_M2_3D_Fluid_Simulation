@@ -5,12 +5,15 @@ layout (location = 0) in vec3 aPos;
 out vec4 couleur;
 
 struct Particule {
-    vec3 pos;
-    vec3 dir;
+    vec3 pos; 
     vec3 velocity;
-    float scale;
-    float life;
-    float padding[2];
+    vec3 dir;     
+    float scale;   
+    float life;    
+
+    float padding1;
+    float padding2;
+    float padding3;
 };
 
 layout(std430, binding = 0) buffer ParticuleBuffer {

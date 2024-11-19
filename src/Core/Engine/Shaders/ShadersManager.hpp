@@ -39,7 +39,8 @@ class ShadersManager : public ThreadManager {
         void reloadAllComputeShaders();
         void hotReloadComputeShaderByName(const std::string& name);
         void hotReloadAllComputeShaders();
-        void useComputeShaderByName(const std::string& name, CS_type type); 
+        void useComputeShaderByName(const std::string& name); 
+        void memoryBarrierByName(const std::string& name, CS_type type); 
 
         void setNumGroupsComputeShaderByName(const std::string& name, GLuint numGroupsX, GLuint numGroupsY, GLuint numGroupsZ, int ElementsX, int ElementsY, int ElementsZ); 
         void setNumGroupsAllComputeShader(GLuint numGroupsX, GLuint numGroupsY, GLuint numGroupsZ, int ElementsX, int ElementsY, int ElementsZ); 

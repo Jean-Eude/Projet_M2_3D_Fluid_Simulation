@@ -16,7 +16,8 @@ class ComputeShader {
         void hotReload();
         void unloadShader();
 
-        void useShader(CS_type type);
+        void useShader();
+        void memoryBarrier(CS_type type);
 
         unsigned int getComputeID();
         unsigned int getComputeShaderID();

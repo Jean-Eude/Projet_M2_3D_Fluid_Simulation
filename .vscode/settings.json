@@ -72,7 +72,9 @@
     "span": "cpp",
     "cfenv": "cpp",
     "codecvt": "cpp",
-    "__nullptr": "cpp"
+    "__nullptr": "cpp",
+    "*.ipp": "cpp",
+    "__split_buffer": "cpp"
   },
   "C_Cpp_Runner.msvcBatchPath": ""
 }
