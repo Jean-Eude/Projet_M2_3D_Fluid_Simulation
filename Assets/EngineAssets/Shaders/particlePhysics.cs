@@ -67,7 +67,7 @@ vec3 getPressureForce(Particule p) {
     for (int i = 0; i < particleCount; ++i) {
         vec3 particleDistance = p.pos - particles[i].pos;
         float radius = length(particleDistance);
-        if (radius == 0.0) {
+        if (radius < 1e-6) {
             continue;
         }
         pressureForce -= particleMass * ((particlePressure / (p.density * p.density)) + getPressurePoint(particles[i].density) / (particles[i].density * particles[i].density)) * dWSpiky(radius, smoothingLength) * particleDistance / radius;
@@ -80,7 +80,7 @@ vec3 getViscosityForce(Particule p) {
     for (int i = 0; i < particleCount; ++i) {
         vec3 particleDistance = p.pos - particles[i].pos;
         float radius = length(particleDistance);
-        if (radius == 0.0) {
+        if (radius < 1e-6) {
             continue;
         }
         viscosityForce += particleMass * (particles[i].velocity - p.velocity) / particles[i].density * d2WLaplacian(radius, smoothingLength);

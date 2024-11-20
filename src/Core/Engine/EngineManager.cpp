@@ -112,14 +112,16 @@ void EngineManager::OnInitWindowEngine() {
     shaders.enqueueShader("Base", FilePath::getFilePath("/Assets/EngineAssets/Shaders/vertex.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/frag.glsl"));
     shaders.enqueueShader("Box", FilePath::getFilePath("/Assets/EngineAssets/Shaders/boxVertex.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/boxFragment.glsl"));
 
+    const float boxSize = 0.5f;
+
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
     float vertices[] = {
         // positions         // texture coords
-        0.5f,  0.5f, 0.5f,  1.0f, 1.0f,  // top right
-        0.5f, 0.5f, -0.5f,  1.0f, 0.0f,  // bottom right
-        -0.5f, 0.5f, -0.5f,  0.0f, 0.0f,  // bottom left
-        -0.5f,  0.5f, 0.5f,  0.0f, 1.0f   // top left 
+        boxSize,  boxSize, boxSize,  1.0f, 1.0f,  // top right
+        boxSize, boxSize, -boxSize,  1.0f, 0.0f,  // bottom right
+        -boxSize, boxSize, -boxSize,  0.0f, 0.0f,  // bottom left
+        -boxSize,  boxSize, boxSize,  0.0f, 1.0f   // top left 
     };
 
     unsigned int indices[] = {  // note that we start from 0!
@@ -172,14 +174,14 @@ void EngineManager::OnInitWindowEngine() {
     };*/
 
     std::vector<glm::vec3> boxVertices = {
-        glm::vec3(-0.5f, -0.5f, -0.5f),
-        glm::vec3(0.5f, -0.5f, -0.5f),
-        glm::vec3(0.5f,  0.5f, -0.5f),
-        glm::vec3(-0.5f,  0.5f, -0.5f),
-        glm::vec3(-0.5f, -0.5f,  0.5f),
-        glm::vec3(0.5f, -0.5f,  0.5f),
-        glm::vec3(0.5f,  0.5f,  0.5f),
-        glm::vec3(-0.5f,  0.5f,  0.5f),
+        glm::vec3(-boxSize, -boxSize, -boxSize),
+        glm::vec3(boxSize, -boxSize, -boxSize),
+        glm::vec3(boxSize,  boxSize, -boxSize),
+        glm::vec3(-boxSize,  boxSize, -boxSize),
+        glm::vec3(-boxSize, -boxSize,  boxSize),
+        glm::vec3(boxSize, -boxSize,  boxSize),
+        glm::vec3(boxSize,  boxSize,  boxSize),
+        glm::vec3(-boxSize,  boxSize,  boxSize),
     };
 
     for (glm::vec3& AABB : boxVertices) {
