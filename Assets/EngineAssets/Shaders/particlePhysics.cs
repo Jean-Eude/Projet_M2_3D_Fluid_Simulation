@@ -95,7 +95,7 @@ vec3 getViscosityForce(Particule p) {
     vec3 viscosityForce = vec3(0.0);
     for (int i = 0; i < particleCount; ++i) {
         float radius = length(particles[i].pos - p.pos);
-        viscosityForce += particleMass / particles[i].density * particles[i].pos - p.pos * d2WLaplacian(radius, smoothingLength);
+        viscosityForce += (particleMass / particles[i].density) * (particles[i].velocity - p.velocity) * d2WLaplacian(radius, smoothingLength);
     }
     return particleViscosity * viscosityForce;
 }
@@ -119,7 +119,7 @@ void main() {
     // ------------------------------------------------------------------ //
 
     //p.velocity += getAppliedForce(p) * deltaTime;
-    p.velocity = vec3(1,0,0);
+    p.velocity += vec3(1,0,0);
     //p.pos += p.velocity * deltaTime;
 
     // ------------------------------------------------------------------ //

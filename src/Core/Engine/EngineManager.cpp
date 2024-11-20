@@ -374,7 +374,11 @@ void EngineManager::OnUpdateWindowEngine() {
 
         shaders.useComputeShaderByName("particleIntegrationCS");
         shaders.setCompBind1f("particleIntegrationCS", "deltaTime", deltaTime);
+        shaders.setCompBind3f("particleIntegrationCS", "minAABB", minAABB);
+        shaders.setCompBind3f("particleIntegrationCS", "maxAABB", maxAABB);
+
         shaders.memoryBarrierByName("particleIntegrationCS", CS_SSBO);
+
 
         /*std::vector<Particule> output(nbParticules);
         ssboM.linkSSBOByName("particulesSSBO", GL_READ_ONLY, output);
