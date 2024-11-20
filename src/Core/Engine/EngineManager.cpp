@@ -241,7 +241,7 @@ void EngineManager::OnInitWindowEngine() {
     shaders.setCompBind1f("particlePhysicsCS", "particleRestDensity", 1000.0f);
     shaders.setCompBind1f("particlePhysicsCS", "particleMass", 1.0f);
     shaders.setCompBind1f("particlePhysicsCS", "particleViscosity", 0.001f);
-    shaders.setCompBind1f("particlePhysicsCS", "stiffness", 250.0f);
+    shaders.setCompBind1f("particlePhysicsCS", "stiffness", 3000.0f);
     shaders.setCompBind1f("particlePhysicsCS", "smoothingLength", 0.2f);
 
     shaders.enqueueComputeShader("particleIntegrationCS", FilePath::getFilePath("/Assets/EngineAssets/Shaders/particleIntegration.cs"));

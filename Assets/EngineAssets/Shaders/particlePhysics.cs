@@ -41,7 +41,7 @@ float dWSpiky(float r, float h) {
     float h6 = h2 * h2 * h2;
     float c = h - r;
     float c2 = c * c;
-    return -45.0 / (h6 * M_PI ) * c2;
+    return -45.0 / (h6 * M_PI) * c2;
 }
 
 // seconde dérivée du kernel de viscosité (laplacien)
@@ -50,10 +50,8 @@ float d2WLaplacian(float r, float h) {
         return 0.0;
     }
     float h2 = h * h;
-    float h3 = h * h2;
-    float r2 = r * r;
-    float r3 = r2 * r;
-    return (-r3 / (2.0 * h3) + r2 / h2 + h / (2.0 * r) - 1);
+    float h6 = h2 * h2 * h2;
+    return 45.0 / (M_PI * h6) * (h - r);
 }
 
 float getPressurePoint(float density) {
@@ -72,7 +70,7 @@ vec3 getPressureForce(Particule p) {
         if (radius == 0.0) {
             continue;
         }
-        pressureForce -= (particlePressure + getPressurePoint(particles[i].density)) / (2.0 * p.density * particles[i].density) * dWSpiky(radius, smoothingLength) * particleDistance / radius;
+        pressureForce -= particleMass * ((particlePressure / (p.density * p.density)) + getPressurePoint(particles[i].density) / (particles[i].density * particles[i].density)) * dWSpiky(radius, smoothingLength) * particleDistance / radius;
     }
     return pressureForce;
 }
@@ -85,7 +83,7 @@ vec3 getViscosityForce(Particule p) {
         if (radius == 0.0) {
             continue;
         }
-        viscosityForce += (1.0 / particles[i].density) * (particles[i].velocity - p.velocity) * d2WLaplacian(radius, smoothingLength) * particleDistance / radius;
+        viscosityForce += particleMass * (particles[i].velocity - p.velocity) / particles[i].density * d2WLaplacian(radius, smoothingLength);
     }
     return particleViscosity * viscosityForce;
 }
@@ -95,7 +93,7 @@ vec3 getGravityForce(Particule p) {
 }
 
 vec3 getAppliedForce(Particule p) {
-    return (getPressureForce(p) + getViscosityForce(p)) / p.density + getGravityForce(p);
+    return (getPressureForce(p) + getViscosityForce(p) + getGravityForce(p)) / p.density;
 }
 
 void main() {

@@ -37,16 +37,16 @@ void main() {
     p.velocity += p.force * deltaTime;
     p.pos += p.velocity * deltaTime;
 
-    // Gestion des collisions
-    for (int i = 0; i < 3; i++) { // 3 = XYZ
+    for (int i = 0; i < 3; i++) {
         if (p.pos[i] < minAABB[i]) {
-            p.pos[i] = minAABB[i];          
-            p.velocity[i] = -p.velocity[i];
+            p.pos[i] = minAABB[i];
+            p.velocity[i] = 0;
         } else if (p.pos[i] > maxAABB[i]) {
-            p.pos[i] = maxAABB[i];         
-            p.velocity[i] = -p.velocity[i];
+            p.pos[i] = maxAABB[i];
+            p.velocity[i] = 0;
         }
     }
+
 
     particles[id] = p;
 }
