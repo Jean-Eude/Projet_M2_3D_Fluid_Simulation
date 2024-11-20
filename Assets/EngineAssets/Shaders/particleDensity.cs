@@ -27,14 +27,15 @@ uniform int particleCount;
 uniform float particleMass; // 1.0
 uniform float smoothingLength; // Taille du noyau
 
-// kernel Poly6 pour la densité
+
+
+// kernel Poly6 pour la densité (ok)
 float wPoly6(float r, float h) {
     if (0 > r || r > h) {
         return 0.0;
     }
     float h2 = h * h;
-    float h4 = h2 * h2;
-    float h9 = h4 * h4 * h;
+    float h9 = h2 * h2 * h2 * h;
     float c = h2 - r * r;
     float c3 = c * c * c;
     return 315.0 / (64.0 * M_PI * h9) * c3;
@@ -43,7 +44,10 @@ float wPoly6(float r, float h) {
 float getDensity(Particule p) {
     float density = 0.0;
     for (int i = 0; i < particleCount; ++i) {
-        float radius = length(particles[i].pos - p.pos);
+        vec3 diff = particles[i].pos - p.pos;  
+        float radius2 = dot(diff, diff);      
+        if (radius2 > smoothingLength * smoothingLength) continue; 
+        float radius = sqrt(radius2);        
         density += particleMass * wPoly6(radius, smoothingLength);
     }
     return density;
