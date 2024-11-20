@@ -251,6 +251,8 @@ void EngineManager::OnInitWindowEngine() {
         particles[i].life = 1.;
     }
 
+    std::cout << particles.size() << std::endl;
+
     ssboM.enqueueSSBO("particulesSSBO", GL_DYNAMIC_DRAW, particles);
     
     // Création du VBO pour stocker les positions des particules
@@ -260,6 +262,8 @@ void EngineManager::OnInitWindowEngine() {
     glGenBuffers(1, &VBO3);
     glBindBuffer(GL_ARRAY_BUFFER, VBO3);
     glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * nbParticules, nullptr, GL_DYNAMIC_DRAW);
+
+    std::cout << sizeof(glm::vec3) * nbParticules << std::endl;
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
     glEnableVertexAttribArray(0);
@@ -313,9 +317,10 @@ void EngineManager::OnUpdateWindowEngine() {
     if (m_inputs->IsKeyPressed(GLFW_KEY_R)) {
         shaders.hotReloadAllComputeShaders();
         shaders.useComputeShaderByName("ParticuleCS");
+        shaders.memoryBarrierByName("ParticuleCS", CS_SSBO);
+
         shaders.setCompBind3f("ParticuleCS", "minAABB", minAABB);
         shaders.setCompBind3f("ParticuleCS", "maxAABB", maxAABB);
-        shaders.memoryBarrierByName("ParticuleCS", CS_SSBO);
 
         shaders.reloadAllShaders();
         shaders.useShaderByName("Particule");
@@ -343,6 +348,14 @@ void EngineManager::OnUpdateWindowEngine() {
         shaders.setBind3f("ParticuleCS", "camPos", camera.position);
         shaders.memoryBarrierByName("ParticuleCS", CS_SSBO);
 
+
+        std::vector<Particule> output;
+        ssboM.linkSSBOByName("particulesSSBO", GL_READ_ONLY, output);
+
+        for (size_t i = 0; i < 1; ++i) {
+            std::cout << "Particle " << i << ": " << output[0].pos.x << ", " << output[0].pos.y << ", " << output[0].pos.z << std::endl;
+        }
+
         m_TimersList.at(0).UpdateDeltaTime();
     }
 
@@ -368,15 +381,6 @@ void EngineManager::OnUpdateWindowEngine() {
 
         textures.bindAllTextures();
 
-        // Particules
-        shaders.useShaderByName("Particule");
-        shaders.setBind1f("Particule", "tailleParticule", tailleParticule);
-        shaders.setBind4fv("Particule", "mvp", 1, GL_FALSE, glm::value_ptr(mvp));
-        glBindVertexArray(VAO3);
-        //glPointSize(5.0f);
-        glDrawArrays(GL_POINTS, 0, nbParticules);
-        glBindVertexArray(0);
-
         // Box
         shaders.useShaderByName("Box");
         shaders.setBind4fv("Box", "mvp", 1, GL_FALSE, glm::value_ptr(mvp));
@@ -389,10 +393,20 @@ void EngineManager::OnUpdateWindowEngine() {
         // Base
         shaders.useShaderByName("Base");
         shaders.setBind4fv("Base", "mvp", 1, GL_FALSE, glm::value_ptr(mvp));
-
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
+
+        // Particules
+        shaders.useShaderByName("Particule");
+        shaders.setBind4fv("Particule", "mvp", 1, GL_FALSE, glm::value_ptr(mvp));
+        shaders.setBind1f("Particule", "tailleParticule", tailleParticule);
+        glPointSize(10.);
+        glBindVertexArray(VAO3);
+        glDrawArrays(GL_POINTS, 0, nbParticules);
+        glBindVertexArray(0);
+
+
     m_fbo.unbindFBO();
 
 

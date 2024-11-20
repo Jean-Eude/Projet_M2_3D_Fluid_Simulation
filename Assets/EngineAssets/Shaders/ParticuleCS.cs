@@ -33,20 +33,6 @@ void main() {
 
     // ------------------------------------------------------------------ //
 
-    p.velocity += vec3(0.0, 9.8, 0.0) * deltaTime;
-    p.pos += p.velocity * deltaTime;
-
-
-    for (int i = 0; i < 3; i++) { // 3 = XYZ
-        if (p.pos[i] < minAABB[i]) {
-            p.pos[i] = minAABB[i];          
-            p.velocity[i] = -p.velocity[i];
-        } else if (p.pos[i] > maxAABB[i]) {
-            p.pos[i] = maxAABB[i];         
-            p.velocity[i] = -p.velocity[i];
-        }
-    }
-
     // ------------------------------------------------------------------ //
 
     // Stocker les changements dans le buffer
