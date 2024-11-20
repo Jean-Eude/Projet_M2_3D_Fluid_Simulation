@@ -10,6 +10,8 @@ struct Particule {
     float _padd2;
     vec3 dir;
     float _pad3;
+    vec3 force;
+    float _pad4;
     float scale;         
     float life;
     float density;
@@ -32,6 +34,7 @@ void main() {
 
     Particule p = particles[id];
 
+    p.velocity += p.force * deltaTime;
     p.pos += p.velocity * deltaTime;
 
     // Gestion des collisions

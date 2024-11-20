@@ -29,13 +29,15 @@ struct alignas(16) Particule {
     float _pad2;
     glm::vec3 dir;
     float _pad3;
+    glm::vec3 force;
+    float _pad4;
     float scale;         
     float life;
     float density;
 };
 
 
-int nbParticules = 1000;
+int nbParticules = 10000;
 std::vector<Particule> particles(nbParticules);
 float tailleParticule = 5.f;
 
@@ -265,7 +267,8 @@ void EngineManager::OnInitWindowEngine() {
         particles[i].velocity = glm::vec3(0.0f, 0.0f, 0.0f);
         particles[i].scale = tailleParticule;
         particles[i].life = 1.;
-        particles[i].density = 2.0f;
+        particles[i].density = 0.0f;
+        particles[i].force = glm::vec3(0.0f, 0.0f, 0.0f);
     }
 
     std::cout << particles.size() << std::endl;

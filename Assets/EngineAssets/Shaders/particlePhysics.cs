@@ -12,6 +12,8 @@ struct Particule {
     float _padd2;
     vec3 dir;
     float _pad3;
+    vec3 force;
+    float _pad4;
     float scale;         
     float life;
     float density;
@@ -32,61 +34,45 @@ uniform float smoothingLength; // Taille du noyau
 
 // première dérivée du Spiky kernel pour la pression
 float dWSpiky(float r, float h) {
-    if (0 > r && r > h) {
+    if (0 > r || r > h) {
         return 0.0;
     }
     float h2 = h * h;
     float h6 = h2 * h2 * h2;
-    float absr = abs(r);
-    float c = h - absr;
+    float c = h - r;
     float c2 = c * c;
-    return 45.0 / (h6 * M_PI * absr) * c2;
+    return -45.0 / (h6 * M_PI ) * c2;
 }
 
-float wSpiky(float r, float h) {
-    if (0 > r && r > h) {
-        return 0.0;
-    }
-    float h2 = h * h;
-    float h6 = h2 * h2 * h2;
-    float hr = (h - r);
-    float hr3 = hr * hr * hr;
-    return 15.0 / (h6 * M_PI) * hr;
-}
-
-float wLaplacian(float r, float h) {
-    if (0 > r && r > h) {
+// seconde dérivée du kernel de viscosité (laplacien)
+float d2WLaplacian(float r, float h) {
+    if (0 > r || r > h) {
         return 0.0;
     }
     float h2 = h * h;
     float h3 = h * h2;
     float r2 = r * r;
     float r3 = r2 * r;
-    return 15.0 / (2 * M_PI * h3) * (-r3 / (2.0 * h3) + r2 / h2 + h / (2.0 * r) - 1);
-}
-
-// seconde dérivée du kernel de viscosité (laplacien)
-float d2WLaplacian(float r, float h) {
-    if (0 > r && r > h) {
-        return 0.0;
-    }
-    float h2 = h * h;
-    float h6 = h2 * h2 * h2;
-    return 45.0 / (h6 * M_PI) * (h - abs(r));
+    return (-r3 / (2.0 * h3) + r2 / h2 + h / (2.0 * r) - 1);
 }
 
 float getPressurePoint(float density) {
     return max(stiffness * (density - particleRestDensity), 0.0);
 }
 
+// https://wickedengine.net/2018/05/scalabe-gpu-fluid-simulation/comment-page-1/
+
 vec3 getPressureForce(Particule p) {
     uint id = gl_GlobalInvocationID.x;
     vec3 pressureForce = vec3(0.0);
     float particlePressure = getPressurePoint(p.density);
     for (int i = 0; i < particleCount; ++i) {
-        vec3 particleDistance = particles[i].pos - p.pos;
+        vec3 particleDistance = p.pos - particles[i].pos;
         float radius = length(particleDistance);
-        pressureForce -= particleMass / particles[i].density * getPressurePoint(particles[i].density) * wSpiky(radius, smoothingLength) * particleDistance;
+        if (radius == 0.0) {
+            continue;
+        }
+        pressureForce -= (particlePressure + getPressurePoint(particles[i].density)) / (2.0 * p.density * particles[i].density) * dWSpiky(radius, smoothingLength) * particleDistance / radius;
     }
     return pressureForce;
 }
@@ -94,18 +80,22 @@ vec3 getPressureForce(Particule p) {
 vec3 getViscosityForce(Particule p) {
     vec3 viscosityForce = vec3(0.0);
     for (int i = 0; i < particleCount; ++i) {
-        float radius = length(particles[i].pos - p.pos);
-        viscosityForce += (particleMass / particles[i].density) * (particles[i].velocity - p.velocity) * d2WLaplacian(radius, smoothingLength);
+        vec3 particleDistance = p.pos - particles[i].pos;
+        float radius = length(particleDistance);
+        if (radius == 0.0) {
+            continue;
+        }
+        viscosityForce += (1.0 / particles[i].density) * (particles[i].velocity - p.velocity) * d2WLaplacian(radius, smoothingLength) * particleDistance / radius;
     }
     return particleViscosity * viscosityForce;
 }
 
 vec3 getGravityForce(Particule p) {
-    return p.density * vec3(0.0, 9.81, 0);
+    return vec3(0.0, 9.81, 0);
 }
 
 vec3 getAppliedForce(Particule p) {
-    return getPressureForce(p) + getViscosityForce(p) + getGravityForce(p);
+    return (getPressureForce(p) + getViscosityForce(p)) / p.density + getGravityForce(p);
 }
 
 void main() {
@@ -118,9 +108,7 @@ void main() {
 
     // ------------------------------------------------------------------ //
 
-    //p.velocity += getAppliedForce(p) * deltaTime;
-    p.velocity += vec3(1,0,0);
-    //p.pos += p.velocity * deltaTime;
+    p.force = getAppliedForce(p);
 
     // ------------------------------------------------------------------ //
 
