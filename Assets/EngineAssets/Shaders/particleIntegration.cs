@@ -25,6 +25,7 @@ uniform float deltaTime;
 uniform vec3 minAABB;
 uniform vec3 maxAABB;
 
+#define RESTITUTION 0.3
 
 void main() {
     uint id = gl_GlobalInvocationID.x;
@@ -40,10 +41,10 @@ void main() {
     for (int i = 0; i < 3; i++) {
         if (p.pos[i] < minAABB[i]) {
             p.pos[i] = minAABB[i];
-            p.velocity[i] = 0;
+            p.velocity[i] *= -RESTITUTION;
         } else if (p.pos[i] > maxAABB[i]) {
             p.pos[i] = maxAABB[i];
-            p.velocity[i] = 0;
+            p.velocity[i] *= -RESTITUTION;
         }
     }
 
