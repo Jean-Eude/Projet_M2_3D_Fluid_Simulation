@@ -27,9 +27,12 @@ uniform vec3 maxAABB;
 
 uniform vec3 camPos;
 
+uniform float tailleParticule;
+
+
 void main() {
     vec3 position = particles[gl_VertexID].pos; // Lecture depuis le SSBO
-    gl_PointSize = 5.;
+    gl_PointSize = tailleParticule;
     gl_Position = mvp * vec4(position, 1.0);
 
     // Normalisation de la position pour la couleur (dans l'intervalle [0, 1])

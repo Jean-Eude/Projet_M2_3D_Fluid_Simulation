@@ -38,6 +38,7 @@ struct alignas(16) Particule {
 
 int nbParticules = 1000;
 std::vector<Particule> particles(nbParticules);
+float tailleParticule = 5.f;
 
 glm::vec minAABB = glm::vec3(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
 glm::vec maxAABB = glm::vec3(-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity());
@@ -246,7 +247,7 @@ void EngineManager::OnInitWindowEngine() {
 
         particles[i].dir = glm::vec3(0.f, 0.f, 0.f);
         particles[i].velocity = glm::vec3(0.0f, 0.0f, 0.0f);
-        particles[i].scale = 10.f;
+        particles[i].scale = tailleParticule;
         particles[i].life = 1.;
     }
 
@@ -369,6 +370,7 @@ void EngineManager::OnUpdateWindowEngine() {
 
         // Particules
         shaders.useShaderByName("Particule");
+        shaders.setBind1f("Particule", "tailleParticule", tailleParticule);
         shaders.setBind4fv("Particule", "mvp", 1, GL_FALSE, glm::value_ptr(mvp));
         glBindVertexArray(VAO3);
         //glPointSize(5.0f);
