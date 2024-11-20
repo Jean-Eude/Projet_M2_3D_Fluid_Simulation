@@ -24,15 +24,14 @@ int numGroupsZ = 1;
 // Alignement de 16 octets (obligatoire) pour une structure (CS et VS)
 struct alignas(16) Particule {
     glm::vec3 pos;       
+    float _pad1;
     glm::vec3 velocity;
-    glm::vec3 dir;       
+    float _pad2;
+    glm::vec3 dir;
+    float _pad3;
     float scale;         
     float life;
-
-    // 8 bytes = 4 bytes * 3 float
-    float padding1;      
-    float padding2;     
-    float padding3;
+    float density;
 };
 
 
@@ -224,12 +223,29 @@ void EngineManager::OnInitWindowEngine() {
 
     // Particules 
     shaders.enqueueShader("Particule", FilePath::getFilePath("/Assets/EngineAssets/Shaders/ParticuleVert.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/ParticuleFrag.glsl"));
-    shaders.enqueueComputeShader("ParticuleCS", FilePath::getFilePath("/Assets/EngineAssets/Shaders/ParticuleCS.cs"));
-    shaders.setNumGroupsComputeShaderByName("ParticuleCS", numGroupsX, numGroupsY, numGroupsZ, nbParticules, 1, 1);
+    shaders.enqueueComputeShader("particleDensityCS", FilePath::getFilePath("/Assets/EngineAssets/Shaders/particleDensity.cs"));
+    shaders.setNumGroupsComputeShaderByName("particleDensityCS", numGroupsX, numGroupsY, numGroupsZ, nbParticules, 1, 1);
 
-    shaders.useComputeShaderByName("ParticuleCS");
-    shaders.setCompBind3f("ParticuleCS", "minAABB", minAABB);
-    shaders.setCompBind3f("ParticuleCS", "maxAABB", maxAABB);
+    shaders.useComputeShaderByName("particleDensityCS");
+    shaders.setCompBind1i("particleDensityCS", "particleCount", nbParticules);
+    shaders.setCompBind1f("particleDensityCS", "particleMass", 1.0f);
+    shaders.setCompBind1f("particleDensityCS", "smoothingLength", 0.2f);
+
+    shaders.enqueueComputeShader("particlePhysicsCS", FilePath::getFilePath("/Assets/EngineAssets/Shaders/particlePhysics.cs"));
+    shaders.setNumGroupsComputeShaderByName("particlePhysicsCS", numGroupsX, numGroupsY, numGroupsZ, nbParticules, 1, 1);
+
+    shaders.useComputeShaderByName("particlePhysicsCS");
+    shaders.setCompBind1i("particlePhysicsCS", "particleCount", nbParticules);
+    shaders.setCompBind1f("particlePhysicsCS", "particleRestDensity", 1000.0f);
+    shaders.setCompBind1f("particlePhysicsCS", "particleMass", 1.0f);
+    shaders.setCompBind1f("particlePhysicsCS", "particleViscosity", 0.001f);
+    shaders.setCompBind1f("particlePhysicsCS", "stiffness", 250.0f);
+    shaders.setCompBind1f("particlePhysicsCS", "smoothingLength", 0.2f);
+
+    shaders.enqueueComputeShader("particleIntegrationCS", FilePath::getFilePath("/Assets/EngineAssets/Shaders/particleIntegration.cs"));
+    shaders.setNumGroupsComputeShaderByName("particleIntegrationCS", numGroupsX, numGroupsY, numGroupsZ, nbParticules, 1, 1);
+
+    shaders.useComputeShaderByName("particleIntegrationCS");
 
     shaders.useShaderByName("Particule");    
     shaders.setBind3f("Particule", "minAABB", minAABB);
@@ -249,6 +265,7 @@ void EngineManager::OnInitWindowEngine() {
         particles[i].velocity = glm::vec3(0.0f, 0.0f, 0.0f);
         particles[i].scale = tailleParticule;
         particles[i].life = 1.;
+        particles[i].density = 2.0f;
     }
 
     std::cout << particles.size() << std::endl;
@@ -316,11 +333,11 @@ void EngineManager::OnUpdateWindowEngine() {
 
     if (m_inputs->IsKeyPressed(GLFW_KEY_R)) {
         shaders.hotReloadAllComputeShaders();
-        shaders.useComputeShaderByName("ParticuleCS");
-        shaders.memoryBarrierByName("ParticuleCS", CS_SSBO);
+        //shaders.useComputeShaderByName("ParticuleCS");
+        //shaders.memoryBarrierByName("ParticuleCS", CS_SSBO);
 
-        shaders.setCompBind3f("ParticuleCS", "minAABB", minAABB);
-        shaders.setCompBind3f("ParticuleCS", "maxAABB", maxAABB);
+        //shaders.setCompBind3f("ParticuleCS", "minAABB", minAABB);
+        //shaders.setCompBind3f("ParticuleCS", "maxAABB", maxAABB);
 
         shaders.reloadAllShaders();
         shaders.useShaderByName("Particule");
@@ -337,24 +354,37 @@ void EngineManager::OnUpdateWindowEngine() {
         m_TimersList.at(0).Play();
     }
 
+    ssboM.bindBufferBaseByName("particulesSSBO");
+
     m_TimersList.at(0).Update();
     while(m_TimersList.at(0).getAcc() >= m_TimersList.at(0).getMSPerUpdate()) {
 
         // MAJ de la logique
         float deltaTime = static_cast<float>(m_TimersList.at(0).getDeltaTime());
-        ssboM.bindBufferBaseByName("particulesSSBO");
-        shaders.useComputeShaderByName("ParticuleCS");
-        shaders.setCompBind1f("ParticuleCS", "deltaTime", deltaTime);
-        shaders.setBind3f("ParticuleCS", "camPos", camera.position);
-        shaders.memoryBarrierByName("ParticuleCS", CS_SSBO);
+        shaders.useComputeShaderByName("particleDensityCS");
+        shaders.memoryBarrierByName("particleDensityCS", CS_SSBO);
 
+        /*for (size_t i = 0; i < nbParticules; ++i) {
+            std::cout << "Particle " << i << ": " << output[i].density << std::endl;
+        }*/
 
-        std::vector<Particule> output;
+        shaders.useComputeShaderByName("particlePhysicsCS");
+        shaders.setCompBind1f("particlePhysicsCS", "deltaTime", deltaTime);
+        shaders.memoryBarrierByName("particlePhysicsCS", CS_SSBO);
+
+        shaders.useComputeShaderByName("particleIntegrationCS");
+        shaders.setCompBind1f("particleIntegrationCS", "deltaTime", deltaTime);
+        shaders.memoryBarrierByName("particleIntegrationCS", CS_SSBO);
+
+        /*std::vector<Particule> output(nbParticules);
         ssboM.linkSSBOByName("particulesSSBO", GL_READ_ONLY, output);
 
-        for (size_t i = 0; i < 1; ++i) {
-            std::cout << "Particle " << i << ": " << output[0].pos.x << ", " << output[0].pos.y << ", " << output[0].pos.z << std::endl;
+        for (size_t i = 0; i < nbParticules; ++i) {
+            output[i].pos += deltaTime * output[i].velocity;
+            particles[i] = output[i];
+            std::cout << output[i].velocity.x << '\n';
         }
+        //particles = output;*/
 
         m_TimersList.at(0).UpdateDeltaTime();
     }
