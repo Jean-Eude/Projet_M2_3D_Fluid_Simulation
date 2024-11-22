@@ -7,6 +7,8 @@ out float density;
 out vec3 velocity;
 out vec3 force;
 
+out vec3 position;
+
 struct Particule {
     vec3 pos;
     float _pad1; 
@@ -36,14 +38,15 @@ uniform float tailleParticule;
 
 
 void main() {
-    vec3 position = particles[gl_VertexID].pos; // Lecture depuis le SSBO
+    position = particles[gl_VertexID].pos; // Lecture depuis le SSBO
     gl_PointSize = tailleParticule;
     gl_Position = mvp * vec4(position, 1.0);
 
     // Normalisation de la position pour la couleur (dans l'intervalle [0, 1])
     vec3 normalizedPos = (position - minAABB) / (maxAABB - minAABB);
     // Couleur basée sur la position normalisée
-    couleur = vec4(vec3(particles[gl_VertexID].density), 1.0f);
+    couleur = vec4(normalizedPos, 1.0f);
+
     velocity = particles[gl_VertexID].velocity;
     density = particles[gl_VertexID].density;
     force = particles[gl_VertexID].force;

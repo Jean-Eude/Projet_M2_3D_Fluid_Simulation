@@ -115,7 +115,7 @@ vec3 getViscosityForce(Particule p) {
 }
 
 vec3 getGravityForce(Particule p) {
-    return vec3(0.0, 9.81, 0);
+    return vec3(0.0, 10. * 9.81, 0);
 }
 
 vec3 getAppliedForce(Particule p) {

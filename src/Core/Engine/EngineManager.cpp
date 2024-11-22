@@ -37,9 +37,10 @@ struct alignas(16) Particule {
 };
 
 
-int nbParticules = 10000;
+int pboxSize = 20;
+int nbParticules = pboxSize * pboxSize * pboxSize;
 std::vector<Particule> particles(nbParticules);
-float tailleParticule = 5.f;
+float tailleParticule = 10.f;
 
 glm::vec minAABB = glm::vec3(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
 glm::vec maxAABB = glm::vec3(-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity());
@@ -112,7 +113,7 @@ void EngineManager::OnInitWindowEngine() {
     shaders.enqueueShader("Base", FilePath::getFilePath("/Assets/EngineAssets/Shaders/vertex.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/frag.glsl"));
     shaders.enqueueShader("Box", FilePath::getFilePath("/Assets/EngineAssets/Shaders/boxVertex.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/boxFragment.glsl"));
 
-    const float boxSize = 0.4f;
+    const float boxSize = 0.3f;
 
     // Calcul de smoothLength
     float Volume = boxSize * boxSize * boxSize;
@@ -265,24 +266,26 @@ void EngineManager::OnInitWindowEngine() {
     shaders.setBind3f("Particule", "minAABB", minAABB);
     shaders.setBind3f("Particule", "maxAABB", maxAABB);
 
-    for(size_t i = 0; i < nbParticules; i++) {
-        float t = static_cast<float>(i) / (nbParticules - 1);
-        float padding = 0.0;
+    for (std::size_t i = 0; i < pboxSize; ++i) {
+        for (std::size_t j = 0; j < pboxSize; ++j) {
+            for (std::size_t k = 0; k < pboxSize; ++k) {
+                std::size_t index = i + j * pboxSize + k * pboxSize * pboxSize;
 
-        particles[i].pos = glm::vec3(
-            (minAABB.x + padding) + static_cast<float>(rand()) / RAND_MAX * ((maxAABB.x - padding) - (minAABB.x + padding)),
-            (minAABB.y + padding) + static_cast<float>(rand()) / RAND_MAX * ((maxAABB.y - padding) - (minAABB.y + padding)),
-            (minAABB.z + padding) + static_cast<float>(rand()) / RAND_MAX * ((maxAABB.z - padding) - (minAABB.z + padding))
-        );
+                particles[index].pos = glm::vec3(
+                    0.01f * i,
+                    0.01f * j,
+                    0.01f * k
+                );
 
-        particles[i].dir = glm::vec3(0.f, 0.f, 0.f);
-        particles[i].velocity = glm::vec3(0.0f, 0.0f, 0.0f);
-        particles[i].scale = tailleParticule;
-        particles[i].life = 1.;
-        particles[i].density = 0.0f;
-        particles[i].force = glm::vec3(0.0f, 0.0f, 0.0f);
+                particles[index].dir = glm::vec3(0.f, 0.f, 0.f);
+                particles[index].velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+                particles[index].scale = tailleParticule;
+                particles[index].life = 1.;
+                particles[index].density = 0.0f;
+                particles[index].force = glm::vec3(0.0f, 0.0f, 0.0f);
+            }
+        }
     }
-
     std::cout << particles.size() << std::endl;
 
     ssboM.enqueueSSBO("particulesSSBO", GL_DYNAMIC_DRAW, particles);
