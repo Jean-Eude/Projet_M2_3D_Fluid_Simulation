@@ -9,5 +9,5 @@ out vec4 FragColor;
 
 void main() {
     //FragColor = couleur;
-    FragColor = vec4(vec3(density), 1.);
+    FragColor = vec4(velocity, 1.);
 }

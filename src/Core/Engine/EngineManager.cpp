@@ -37,7 +37,7 @@ struct alignas(16) Particule {
 };
 
 
-int nbParticules = 7000;
+int nbParticules = 10000;
 std::vector<Particule> particles(nbParticules);
 float tailleParticule = 5.f;
 
@@ -112,7 +112,7 @@ void EngineManager::OnInitWindowEngine() {
     shaders.enqueueShader("Base", FilePath::getFilePath("/Assets/EngineAssets/Shaders/vertex.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/frag.glsl"));
     shaders.enqueueShader("Box", FilePath::getFilePath("/Assets/EngineAssets/Shaders/boxVertex.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/boxFragment.glsl"));
 
-    const float boxSize = 2.f;
+    const float boxSize = 0.4f;
 
     // Calcul de smoothLength
     float Volume = boxSize * boxSize * boxSize;
@@ -239,8 +239,8 @@ void EngineManager::OnInitWindowEngine() {
 
     shaders.useComputeShaderByName("particleDensityCS");
     shaders.setCompBind1i("particleDensityCS", "particleCount", nbParticules);
-    shaders.setCompBind1f("particleDensityCS", "particleMass", 1.0f);
-    shaders.setCompBind1f("particleDensityCS", "smoothingLength", 0.2);
+    shaders.setCompBind1f("particleDensityCS", "particleMass", 0.02f);
+    shaders.setCompBind1f("particleDensityCS", "smoothingLength", 0.150f);
 
 
     std::cout << smoothingLength << std::endl;
@@ -251,10 +251,10 @@ void EngineManager::OnInitWindowEngine() {
     shaders.useComputeShaderByName("particlePhysicsCS");
     shaders.setCompBind1i("particlePhysicsCS", "particleCount", nbParticules);
     shaders.setCompBind1f("particlePhysicsCS", "particleRestDensity", 1000.0f);
-    shaders.setCompBind1f("particlePhysicsCS", "particleMass", 1.0f);
-    shaders.setCompBind1f("particlePhysicsCS", "particleViscosity", 0.001f);
-    shaders.setCompBind1f("particlePhysicsCS", "stiffness", 3000.0f);
-    shaders.setCompBind1f("particlePhysicsCS", "smoothingLength", 0.2f);
+    shaders.setCompBind1f("particlePhysicsCS", "particleMass", 0.02f);
+    shaders.setCompBind1f("particlePhysicsCS", "particleViscosity", 1.0f);
+    shaders.setCompBind1f("particlePhysicsCS", "stiffness", 1.0f);
+    shaders.setCompBind1f("particlePhysicsCS", "smoothingLength", 0.150f);
 
     shaders.enqueueComputeShader("particleIntegrationCS", FilePath::getFilePath("/Assets/EngineAssets/Shaders/particleIntegration.cs"));
     shaders.setNumGroupsComputeShaderByName("particleIntegrationCS", numGroupsX, numGroupsY, numGroupsZ, nbParticules, 1, 1);
