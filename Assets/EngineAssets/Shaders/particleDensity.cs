@@ -35,7 +35,7 @@ float wPoly6(float r, float h) {
         return 0.0;
     }
     float h2 = h * h;
-    float h9 = h2 * h2 * h2 * h;
+    float h9 = h2 * h2 * h2 * h2 * h;
     float c = h2 - r * r;
     float c3 = c * c * c;
     return 315.0 / (64.0 * M_PI * h9) * c3;
