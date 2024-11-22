@@ -3,6 +3,9 @@
 layout (location = 0) in vec3 aPos;
 
 out vec4 couleur;
+out float density;
+out vec3 velocity;
+out vec3 force;
 
 struct Particule {
     vec3 pos;
@@ -40,5 +43,8 @@ void main() {
     // Normalisation de la position pour la couleur (dans l'intervalle [0, 1])
     vec3 normalizedPos = (position - minAABB) / (maxAABB - minAABB);
     // Couleur basée sur la position normalisée
-    couleur = vec4(normalizedPos, 1.0f);
+    couleur = vec4(vec3(particles[gl_VertexID].density), 1.0f);
+    velocity = particles[gl_VertexID].velocity;
+    density = particles[gl_VertexID].density;
+    force = particles[gl_VertexID].force;
 }

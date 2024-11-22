@@ -37,7 +37,7 @@ struct alignas(16) Particule {
 };
 
 
-int nbParticules = 1000;
+int nbParticules = 7000;
 std::vector<Particule> particles(nbParticules);
 float tailleParticule = 5.f;
 
@@ -112,7 +112,7 @@ void EngineManager::OnInitWindowEngine() {
     shaders.enqueueShader("Base", FilePath::getFilePath("/Assets/EngineAssets/Shaders/vertex.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/frag.glsl"));
     shaders.enqueueShader("Box", FilePath::getFilePath("/Assets/EngineAssets/Shaders/boxVertex.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/boxFragment.glsl"));
 
-    const float boxSize = 1.f;
+    const float boxSize = 2.f;
 
     // Calcul de smoothLength
     float Volume = boxSize * boxSize * boxSize;
