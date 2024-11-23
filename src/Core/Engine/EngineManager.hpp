@@ -14,6 +14,7 @@
 #include <ComputeShader.hpp>
 #include <SSBO.hpp>
 #include <Camera.hpp>
+#include <SharedServices.hpp>
 
 class EngineManager : public ParserConfig, public Window, public TimerManager, public GPUBuffersManager {
     public:

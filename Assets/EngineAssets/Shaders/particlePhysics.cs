@@ -17,6 +17,7 @@ struct Particule {
     float scale;         
     float life;
     float density;
+    int isActive;
 };
 
 layout(std430, binding = 0) buffer ParticuleBuffer {
@@ -115,7 +116,7 @@ vec3 getViscosityForce(Particule p) {
 }
 
 vec3 getGravityForce(Particule p) {
-    return vec3(0.0, 10. * 9.81, 0);
+    return vec3(0.0, 25. * 9.81, 0);
 }
 
 vec3 getAppliedForce(Particule p) {

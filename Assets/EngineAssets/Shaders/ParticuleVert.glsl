@@ -13,7 +13,7 @@ struct Particule {
     vec3 pos;
     float _pad1; 
     vec3 velocity;
-    float _pad2;
+    float _padd2;
     vec3 dir;
     float _pad3;
     vec3 force;
@@ -21,6 +21,7 @@ struct Particule {
     float scale;         
     float life;
     float density;
+    int isActive;
 };
 
 layout(std430, binding = 0) buffer ParticuleBuffer {

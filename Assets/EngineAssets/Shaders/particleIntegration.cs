@@ -15,6 +15,7 @@ struct Particule {
     float scale;         
     float life;
     float density;
+    int isActive;
 };
 
 layout(std430, binding = 0) buffer ParticuleBuffer {
@@ -25,7 +26,7 @@ uniform float deltaTime;
 uniform vec3 minAABB;
 uniform vec3 maxAABB;
 
-#define RESTITUTION 0.3
+uniform float restitution;
 
 void main() {
     uint id = gl_GlobalInvocationID.x;
@@ -41,10 +42,10 @@ void main() {
     for (int i = 0; i < 3; i++) {
         if (p.pos[i] < minAABB[i]) {
             p.pos[i] = minAABB[i];
-            p.velocity[i] *= -RESTITUTION;
+            p.velocity[i] *= -restitution;
         } else if (p.pos[i] > maxAABB[i]) {
             p.pos[i] = maxAABB[i];
-            p.velocity[i] *= -RESTITUTION;
+            p.velocity[i] *= -restitution;
         }
     }
 

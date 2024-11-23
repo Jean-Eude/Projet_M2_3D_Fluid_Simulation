@@ -1,6 +1,22 @@
 #include <EngineManager.hpp>
 #include <EventManager.hpp>
 
+
+void updateCubeAndPlane(float size,  std::vector<glm::vec3>& BoiteVerts) {
+    // Boîte
+    BoiteVerts.clear();
+    BoiteVerts.push_back(glm::vec3(-size, -size, -size));
+    BoiteVerts.push_back(glm::vec3(size, -size, -size));
+    BoiteVerts.push_back(glm::vec3(size,  size, -size));
+    BoiteVerts.push_back(glm::vec3(-size,  size, -size));
+    BoiteVerts.push_back(glm::vec3(-size, -size,  size));
+    BoiteVerts.push_back(glm::vec3(size, -size,  size));
+    BoiteVerts.push_back(glm::vec3(size,  size,  size));
+    BoiteVerts.push_back(glm::vec3(-size,  size,  size));
+
+    // Plan
+}
+
 GLFWwindow* Window::m_window;
 GLFWimage* Window::m_icon;
 std::string Window::m_iconPath;
@@ -34,13 +50,13 @@ struct alignas(16) Particule {
     float scale;         
     float life;
     float density;
+    int isActive;
 };
 
 
-int pboxSize = 20;
+int pboxSize = 15;
 int nbParticules = pboxSize * pboxSize * pboxSize;
 std::vector<Particule> particles(nbParticules);
-float tailleParticule = 10.f;
 
 glm::vec minAABB = glm::vec3(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
 glm::vec maxAABB = glm::vec3(-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity());
@@ -113,7 +129,7 @@ void EngineManager::OnInitWindowEngine() {
     shaders.enqueueShader("Base", FilePath::getFilePath("/Assets/EngineAssets/Shaders/vertex.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/frag.glsl"));
     shaders.enqueueShader("Box", FilePath::getFilePath("/Assets/EngineAssets/Shaders/boxVertex.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/boxFragment.glsl"));
 
-    const float boxSize = 0.3f;
+    const float boxSize = 0.15f;
 
     // Calcul de smoothLength
     float Volume = boxSize * boxSize * boxSize;
@@ -158,6 +174,7 @@ void EngineManager::OnInitWindowEngine() {
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
 
     glBindVertexArray(0); 
+
 
     textures.enqueueTexture("terrain", FilePath::getFilePath("/Assets/EngineAssets/Textures/terrain2.jpg"), TEX_2D, true, GL_REPEAT, GL_LINEAR);
 
@@ -234,15 +251,35 @@ void EngineManager::OnInitWindowEngine() {
     glBindVertexArray(0);
 
     // Particules 
+    SharedServices::GetInstance().RegisterService("smoothingL", std::make_shared<float>(smoothingLength));
+
+    float restDensity = 1000.f;
+    SharedServices::GetInstance().RegisterService("particleRestDensity", std::make_shared<float>(restDensity));
+
+    float mass = 0.02f;
+    SharedServices::GetInstance().RegisterService("mass", std::make_shared<float>(mass));
+
+    float viscosity = 1.0f;
+    SharedServices::GetInstance().RegisterService("viscosity", std::make_shared<float>(viscosity));
+
+    float stiffness = 1.0f;
+    SharedServices::GetInstance().RegisterService("stiffness", std::make_shared<float>(stiffness));
+
+    float tailleParticule = 10.f;
+    SharedServices::GetInstance().RegisterService("sizeParti", std::make_shared<float>(tailleParticule));
+
+    SharedServices::GetInstance().RegisterFunction<void, float, std::vector<glm::vec3>&>(
+        "updateMesh", std::function<void(float, std::vector<glm::vec3>&)>(updateCubeAndPlane)
+    );
+    
     shaders.enqueueShader("Particule", FilePath::getFilePath("/Assets/EngineAssets/Shaders/ParticuleVert.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/ParticuleFrag.glsl"));
     shaders.enqueueComputeShader("particleDensityCS", FilePath::getFilePath("/Assets/EngineAssets/Shaders/particleDensity.cs"));
     shaders.setNumGroupsComputeShaderByName("particleDensityCS", numGroupsX, numGroupsY, numGroupsZ, nbParticules, 1, 1);
 
     shaders.useComputeShaderByName("particleDensityCS");
     shaders.setCompBind1i("particleDensityCS", "particleCount", nbParticules);
-    shaders.setCompBind1f("particleDensityCS", "particleMass", 0.02f);
-    shaders.setCompBind1f("particleDensityCS", "smoothingLength", 0.150f);
-
+    shaders.setCompBind1f("particleDensityCS", "particleMass", *SharedServices::GetInstance().GetService<float>("mass"));
+    shaders.setCompBind1f("particleDensityCS", "smoothingLength", *SharedServices::GetInstance().GetService<float>("smoothingL"));
 
     std::cout << smoothingLength << std::endl;
 
@@ -251,11 +288,8 @@ void EngineManager::OnInitWindowEngine() {
 
     shaders.useComputeShaderByName("particlePhysicsCS");
     shaders.setCompBind1i("particlePhysicsCS", "particleCount", nbParticules);
-    shaders.setCompBind1f("particlePhysicsCS", "particleRestDensity", 1000.0f);
-    shaders.setCompBind1f("particlePhysicsCS", "particleMass", 0.02f);
-    shaders.setCompBind1f("particlePhysicsCS", "particleViscosity", 1.0f);
-    shaders.setCompBind1f("particlePhysicsCS", "stiffness", 1.0f);
-    shaders.setCompBind1f("particlePhysicsCS", "smoothingLength", 0.150f);
+
+    //std::cout << "smoothing" << smoothingLength << std::endl;
 
     shaders.enqueueComputeShader("particleIntegrationCS", FilePath::getFilePath("/Assets/EngineAssets/Shaders/particleIntegration.cs"));
     shaders.setNumGroupsComputeShaderByName("particleIntegrationCS", numGroupsX, numGroupsY, numGroupsZ, nbParticules, 1, 1);
@@ -286,7 +320,7 @@ void EngineManager::OnInitWindowEngine() {
             }
         }
     }
-    std::cout << particles.size() << std::endl;
+    //std::cout << particles.size() << std::endl;
 
     ssboM.enqueueSSBO("particulesSSBO", GL_DYNAMIC_DRAW, particles);
     
@@ -317,7 +351,6 @@ void EngineManager::OnInitWindowEngine() {
         }
     });
 
-    GLFWwindow* window = getWindow();
     m_inputs->setMouseButtonPressedListener([&](const MouseButtonPressedEvent& e) {
         glm::vec2 mousePosition = m_inputs->getMousePosition();
         camera.startPos.x = ((mousePosition.x - (m_fbo.getFBOWidth() / 2) ) / (m_fbo.getFBOWidth() / 2)) * camera.radius;
@@ -386,17 +419,36 @@ void EngineManager::OnUpdateWindowEngine() {
             std::cout << "Particle " << i << ": " << output[i].density << std::endl;
         }*/
 
+        shaders.useComputeShaderByName("particleDensityCS");
+        shaders.setCompBind1f("particleDensityCS", "particleMass", *SharedServices::GetInstance().GetService<float>("mass"));
+        shaders.setCompBind1f("particleDensityCS", "smoothingLength", *SharedServices::GetInstance().GetService<float>("smoothingL"));
+
         shaders.useComputeShaderByName("particlePhysicsCS");
         shaders.setCompBind1f("particlePhysicsCS", "deltaTime", deltaTime);
         shaders.memoryBarrierByName("particlePhysicsCS", CS_SSBO);
+        shaders.setCompBind1f("particlePhysicsCS", "particleRestDensity", *SharedServices::GetInstance().GetService<float>("particleRestDensity"));
+        shaders.setCompBind1f("particlePhysicsCS", "particleMass", *SharedServices::GetInstance().GetService<float>("mass"));
+        shaders.setCompBind1f("particlePhysicsCS", "particleViscosity", *SharedServices::GetInstance().GetService<float>("viscosity"));
+        shaders.setCompBind1f("particlePhysicsCS", "stiffness", *SharedServices::GetInstance().GetService<float>("stiffness"));
+        shaders.setCompBind1f("particlePhysicsCS", "smoothingLength", *SharedServices::GetInstance().GetService<float>("smoothingL"));
 
         shaders.useComputeShaderByName("particleIntegrationCS");
         shaders.setCompBind1f("particleIntegrationCS", "deltaTime", deltaTime);
         shaders.setCompBind3f("particleIntegrationCS", "minAABB", minAABB);
         shaders.setCompBind3f("particleIntegrationCS", "maxAABB", maxAABB);
+        shaders.setCompBind1f("particleIntegrationCS", "globalTime", m_TimersList.at(0).getTotalTimeinSeconds());
+        shaders.setCompBind1f("particleIntegrationCS", "deltaTime", deltaTime);
+        shaders.setCompBind3f("particleIntegrationCS", "minAABB", minAABB);
+        shaders.setCompBind3f("particleIntegrationCS", "maxAABB", maxAABB);
+        shaders.setCompBind3f("particleIntegrationCS", "canonPosition", glm::vec3(0.0f, 0.0f, 0.0f));  
+        shaders.setCompBind3f("particleIntegrationCS", "canonDirection", glm::vec3(1.0f, 1.0f, 0.0f)); 
+        shaders.setCompBind1f("particleIntegrationCS", "emissionRate", 50.0f);     
+        shaders.setCompBind1f("particleIntegrationCS", "particleLifetime", 150.0f);
+        shaders.setCompBind1f("particleIntegrationCS", "speed", 200.0f);           
+        shaders.setCompBind1f("particleIntegrationCS", "dispersion", 0.1f);     
+
 
         shaders.memoryBarrierByName("particleIntegrationCS", CS_SSBO);
-
 
         /*std::vector<Particule> output(nbParticules);
         ssboM.linkSSBOByName("particulesSSBO", GL_READ_ONLY, output);
@@ -452,7 +504,7 @@ void EngineManager::OnUpdateWindowEngine() {
         // Particules
         shaders.useShaderByName("Particule");
         shaders.setBind4fv("Particule", "mvp", 1, GL_FALSE, glm::value_ptr(mvp));
-        shaders.setBind1f("Particule", "tailleParticule", tailleParticule);
+        shaders.setBind1f("Particule", "tailleParticule", *SharedServices::GetInstance().GetService<float>("sizeParti"));
         glPointSize(10.);
         glBindVertexArray(VAO3);
         glDrawArrays(GL_POINTS, 0, nbParticules);

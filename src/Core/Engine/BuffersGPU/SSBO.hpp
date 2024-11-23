@@ -83,11 +83,14 @@ void SSBO::updateSSBO(const std::vector<T>& newData) {
     size_t newDataSize = newData.size() * sizeof(T);
 
     if (newDataSize != this->dataSize) {
+        glBufferData(GL_SHADER_STORAGE_BUFFER, newDataSize, newData.data(), this->usage);
+        this->dataSize = newDataSize;
         std::cerr << "Erreur : la taille des nouvelles données ne correspond pas à la taille du SSBO." << std::endl;
         unbindSSBO();
         return;
+    } else {
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, newDataSize, newData.data());
     }
 
-    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, newDataSize, newData.data());
     unbindSSBO();
 }

@@ -74,7 +74,15 @@
     "codecvt": "cpp",
     "__nullptr": "cpp",
     "*.ipp": "cpp",
-    "__split_buffer": "cpp"
+    "__split_buffer": "cpp",
+    "forward_list": "cpp",
+    "__hash_table": "cpp",
+    "__tree": "cpp",
+    "filesystem": "cpp",
+    "ios": "cpp",
+    "valarray": "cpp",
+    "queue": "cpp",
+    "stack": "cpp"
   },
   "C_Cpp_Runner.msvcBatchPath": "",
   "C_Cpp_Runner.cCompilerPath": "gcc",

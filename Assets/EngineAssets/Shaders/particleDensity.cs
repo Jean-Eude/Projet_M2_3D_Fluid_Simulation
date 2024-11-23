@@ -17,6 +17,7 @@ struct Particule {
     float scale;         
     float life;
     float density;
+    int isActive;
 };
 
 layout(std430, binding = 0) buffer ParticuleBuffer {

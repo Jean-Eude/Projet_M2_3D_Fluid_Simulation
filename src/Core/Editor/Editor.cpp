@@ -80,3 +80,4 @@ std::vector<LayerEditor*> Editor::CreateLayers(LayerStackEditor& stackEditor) {
         new ParticlesManager("Layer_Particles"),
     };
 }
+

@@ -3,7 +3,7 @@ window_width = 1280
 window_height = 720
 window_title = Simulation de Fluides
 window_major = 4
-window_minor = 3
+window_minor = 6
 window_vsync = 1
 ############### UI ###############
 ui_fontsize = 18.0

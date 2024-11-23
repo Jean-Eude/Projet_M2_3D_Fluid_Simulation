@@ -24,6 +24,8 @@ class EditorManager : public ParserConfig {
         std::string version;
         int m_major, m_minor;
 
+    public:
         virtual void OnReadConfigFile(const char* cfg);
-        std::string getGUIVersion();
+        virtual std::string getGUIVersion();
+        virtual ImGuiIO* getIO();
 };

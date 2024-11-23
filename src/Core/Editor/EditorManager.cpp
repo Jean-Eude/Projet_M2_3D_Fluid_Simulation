@@ -44,3 +44,7 @@ std::string EditorManager::getGUIVersion() {
     version = versionStream.str();
     return this->version;
 }
+
+ImGuiIO* EditorManager::getIO() {
+    return m_io;
+}
