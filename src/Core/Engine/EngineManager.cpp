@@ -129,7 +129,7 @@ void EngineManager::OnInitWindowEngine() {
     shaders.enqueueShader("Base", FilePath::getFilePath("/Assets/EngineAssets/Shaders/vertex.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/frag.glsl"));
     shaders.enqueueShader("Box", FilePath::getFilePath("/Assets/EngineAssets/Shaders/boxVertex.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/boxFragment.glsl"));
 
-    const float boxSize = 0.15f;
+    const float boxSize = 0.2f;
 
     // Calcul de smoothLength
     float Volume = boxSize * boxSize * boxSize;
@@ -267,6 +267,9 @@ void EngineManager::OnInitWindowEngine() {
 
     float tailleParticule = 10.f;
     SharedServices::GetInstance().RegisterService("sizeParti", std::make_shared<float>(tailleParticule));
+
+    float restitution = 0.3f;
+    SharedServices::GetInstance().RegisterService("restitution", std::make_shared<float>(restitution));
 
     SharedServices::GetInstance().RegisterFunction<void, float, std::vector<glm::vec3>&>(
         "updateMesh", std::function<void(float, std::vector<glm::vec3>&)>(updateCubeAndPlane)
@@ -446,6 +449,7 @@ void EngineManager::OnUpdateWindowEngine() {
         shaders.setCompBind1f("particleIntegrationCS", "particleLifetime", 150.0f);
         shaders.setCompBind1f("particleIntegrationCS", "speed", 200.0f);           
         shaders.setCompBind1f("particleIntegrationCS", "dispersion", 0.1f);     
+        shaders.setCompBind1f("particleIntegrationCS", "restitution", *SharedServices::GetInstance().GetService<float>("restitution"));
 
 
         shaders.memoryBarrierByName("particleIntegrationCS", CS_SSBO);

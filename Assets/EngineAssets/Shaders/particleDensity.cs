@@ -28,8 +28,6 @@ uniform int particleCount;
 uniform float particleMass; // 1.0
 uniform float smoothingLength; // Taille du noyau
 
-
-
 // kernel Poly6 pour la densité (ok)
 float wPoly6(float r, float h) {
     if (0 > r || r > h) {
@@ -63,7 +61,6 @@ void main() {
     Particule p = particles[id];
 
     p.density = getDensity(p);
-    //p.pos += vec3(0.01,0,0);
 
     particles[id] = p;
 }
