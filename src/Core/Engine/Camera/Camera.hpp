@@ -1,7 +1,7 @@
 #include <HeadersBase.hpp>
 
 struct Quaternion{
-    float cosine;
+    float cosine = 0.0f;
     glm::vec3 axis;
 
 };
@@ -13,7 +13,7 @@ class Camera{
     public:
         glm::vec3 position = glm::vec3(0.0f, 0.0f, -3.0f);
         glm::vec3 startPos;
-        glm::vec3 currentPos = startPos;
+        glm::vec3 currentPos;
         glm::vec3 startPosUnitVector;
         glm::vec3 currentPosUnitVector;
 

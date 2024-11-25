@@ -34,7 +34,7 @@ class ParticlesManager : public LayerEditor {
                 ImGui::SliderFloat("Stiffness = K", stiff.get(), 0.1f, 10.f);
                 ImGui::SliderFloat("Taille Particule ", size.get(), 0.1f, 50.f);
                 ImGui::SliderFloat("Coefficent de restitution ", resti.get(), 0.01f, 1.f);
-                ImGui::SliderFloat("Gravité ", gravi.get(), -25.0f, 25.f);
+                ImGui::SliderFloat("Gravité ", gravi.get(), -50.0f, 50.0f);
 
                 if (ImGui::Button("Importer un modèle")) {
                     IGFD::FileDialogConfig config;

@@ -50,8 +50,7 @@ void Camera::rotation(){
     
     glm::vec3 temporaryVector;
 
-    temporaryVector = glm::cross(currentQuaternion.axis, lastQuaternion.axis);
-    
+    temporaryVector = glm::cross(currentQuaternion.axis, lastQuaternion.axis);    
 
     rotationalAxis_2.x = (currentQuaternion.cosine * lastQuaternion.axis.x) + 
                             (lastQuaternion.cosine * currentQuaternion.axis.x ) +

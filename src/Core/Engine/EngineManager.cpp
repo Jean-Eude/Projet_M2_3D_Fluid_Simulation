@@ -346,7 +346,6 @@ void EngineManager::OnInitWindowEngine() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-
     m_inputs->setMouseScrolledListener([&](const MouseScrolledEvent& e) {
         glm::vec3 cameraDirection = glm::normalize(camera.position);
         camera.position -= 0.075f * e.yOffset * cameraDirection;
@@ -362,11 +361,15 @@ void EngineManager::OnInitWindowEngine() {
         camera.startPos.x = ((mousePosition.x - (m_fbo.getFBOWidth() / 2) ) / (m_fbo.getFBOWidth() / 2)) * camera.radius;
         camera.startPos.y = (((m_fbo.getFBOHeight() / 2) - mousePosition.y) / (m_fbo.getFBOHeight() / 2)) * camera.radius;
         camera.startPos.z = camera.z_axis(camera.startPos.x, camera.startPos.y);
+        camera.currentPos = camera.startPos;
         camera.setFlag(true);
+
     });
 
     m_inputs->setMouseButtonReleasedListener([&](const MouseButtonReleasedEvent& e) {
-        camera.replace();
+        if (camera.currentPos != camera.startPos) {
+            camera.replace();
+        }
         camera.setFlag(false);
     });
 
