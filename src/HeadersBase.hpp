@@ -56,6 +56,9 @@
 #include <ImGui/imgui_impl_opengl3.h>
 #include <ImGui/imgui_internal.h>
 
+// ImGuiFileDialog
+#include <ImGuiFileDialog/ImGuiFileDialog.h>
+
 // STB
 #include <stb/stb_image.h>
 #include <stb/stb_image_write.h>

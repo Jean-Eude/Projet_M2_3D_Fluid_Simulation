@@ -455,7 +455,6 @@ void EngineManager::OnUpdateWindowEngine() {
         shaders.setCompBind1f("particleIntegrationCS", "dispersion", 0.1f);     
         shaders.setCompBind1f("particleIntegrationCS", "restitution", *SharedServices::GetInstance().GetService<float>("restitution"));
 
-
         shaders.memoryBarrierByName("particleIntegrationCS", CS_SSBO);
 
         /*std::vector<Particule> output(nbParticules);

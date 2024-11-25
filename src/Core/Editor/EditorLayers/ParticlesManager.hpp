@@ -22,7 +22,7 @@ class ParticlesManager : public LayerEditor {
 
                 auto updateFunc = SharedServices::GetInstance().GetFunction<void, float, std::vector<glm::vec3>&>("updateMesh");
 
-                std::cout << *resti.get() << std::endl;
+                //std::cout << *resti.get() << std::endl;
 
                 ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
                 ImGui::Begin("Gestionnaire de particules");
@@ -35,6 +35,20 @@ class ParticlesManager : public LayerEditor {
                 ImGui::SliderFloat("Taille Particule ", size.get(), 0.1f, 50.f);
                 ImGui::SliderFloat("Coefficent de restitution ", resti.get(), 0.01f, 1.f);
                 ImGui::SliderFloat("Gravité ", gravi.get(), -25.0f, 25.f);
+
+                if (ImGui::Button("Importer un modèle")) {
+                    IGFD::FileDialogConfig config;
+                    config.path = "../Assets/EngineAssets/Models";
+                    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Importer un modèle", ".obj", config);
+                }
+                if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey")) {
+                    if (ImGuiFileDialog::Instance()->IsOk()) { // action if OK
+                        std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+                        std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+                    }
+                    
+                    ImGuiFileDialog::Instance()->Close();
+                }
 
                 //std::cout << *a << std::endl;
 
