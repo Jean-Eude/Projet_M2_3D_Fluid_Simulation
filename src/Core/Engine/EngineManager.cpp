@@ -275,6 +275,9 @@ void EngineManager::OnInitWindowEngine() {
     float gravity = 9.81f;
     SharedServices::GetInstance().RegisterService("gravity", std::make_shared<float>(gravity));
 
+    bool gravityFollowCamera = false;
+    SharedServices::GetInstance().RegisterService("gravityFollowsCamera", std::make_shared<bool>(gravityFollowCamera));
+
     SharedServices::GetInstance().RegisterFunction<void, float, std::vector<glm::vec3>&>(
         "updateMesh", std::function<void(float, std::vector<glm::vec3>&)>(updateCubeAndPlane)
     );
@@ -417,6 +420,13 @@ void EngineManager::OnUpdateWindowEngine() {
 
     ssboM.bindBufferBaseByName("particulesSSBO");
 
+    glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(70.0f), static_cast<float>(m_fbo.getFBOWidth()) / m_fbo.getFBOHeight(), 0.1f, 1000.0f);
+    glm::mat4 view = glm::mat4(1.0f);
+    view = glm::translate(view, camera.position); 
+    view = glm::rotate(view, glm::radians(camera.angle), camera.rotationalAxis);
+    glm::mat4 mvp = projection * view * model;
+
     m_TimersList.at(0).Update();
     while(m_TimersList.at(0).getAcc() >= m_TimersList.at(0).getMSPerUpdate()) {
 
@@ -441,7 +451,12 @@ void EngineManager::OnUpdateWindowEngine() {
         shaders.setCompBind1f("particlePhysicsCS", "particleViscosity", *SharedServices::GetInstance().GetService<float>("viscosity"));
         shaders.setCompBind1f("particlePhysicsCS", "stiffness", *SharedServices::GetInstance().GetService<float>("stiffness"));
         shaders.setCompBind1f("particlePhysicsCS", "smoothingLength", smoothingLength);
-        shaders.setCompBind1f("particlePhysicsCS", "gravity", *SharedServices::GetInstance().GetService<float>("gravity"));
+        if (*SharedServices::GetInstance().GetService<bool>("gravityFollowsCamera")) {
+            shaders.setCompBind3f("particlePhysicsCS", "gravity", glm::vec3(glm::inverse(view) * glm::vec4(0.0f, -*SharedServices::GetInstance().GetService<float>("gravity"), 0.0f, 0.0f)));
+        }
+        else {
+            shaders.setCompBind3f("particlePhysicsCS", "gravity", glm::vec3(0.0f, *SharedServices::GetInstance().GetService<float>("gravity"), 0.0f));
+        }
 
         shaders.useComputeShaderByName("particleIntegrationCS");
         shaders.setCompBind1f("particleIntegrationCS", "deltaTime", deltaTime);
@@ -483,12 +498,6 @@ void EngineManager::OnUpdateWindowEngine() {
     //glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
     // Rendu des particules
-    glm::mat4 model = glm::mat4(1.0f);
-    glm::mat4 projection = glm::perspective(glm::radians(70.0f), static_cast<float>(m_fbo.getFBOWidth()) / m_fbo.getFBOHeight(), 0.1f, 1000.0f);
-    glm::mat4 view = glm::mat4(1.0f);
-    view = glm::translate(view, camera.position); 
-    view = glm::rotate(view, glm::radians(camera.angle), camera.rotationalAxis);
-    glm::mat4 mvp = projection * view * model;
 
 
     m_fbo.bindFBO();

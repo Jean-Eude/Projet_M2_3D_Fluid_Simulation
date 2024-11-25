@@ -19,6 +19,7 @@ class ParticlesManager : public LayerEditor {
                 auto size = SharedServices::GetInstance().GetService<float>("sizeParti");
                 auto resti = SharedServices::GetInstance().GetService<float>("restitution");
                 auto gravi = SharedServices::GetInstance().GetService<float>("gravity");
+                auto gravityFollowsCamera = SharedServices::GetInstance().GetService<bool>("gravityFollowsCamera");
 
                 auto updateFunc = SharedServices::GetInstance().GetFunction<void, float, std::vector<glm::vec3>&>("updateMesh");
 
@@ -35,6 +36,8 @@ class ParticlesManager : public LayerEditor {
                 ImGui::SliderFloat("Taille Particule ", size.get(), 0.1f, 50.f);
                 ImGui::SliderFloat("Coefficent de restitution ", resti.get(), 0.01f, 1.f);
                 ImGui::SliderFloat("Gravité ", gravi.get(), -50.0f, 50.0f);
+
+                ImGui::Checkbox("Gravité en fonction de la caméra", gravityFollowsCamera.get());
 
                 if (ImGui::Button("Importer un modèle")) {
                     IGFD::FileDialogConfig config;

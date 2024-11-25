@@ -32,7 +32,7 @@ uniform float particleMass; // 1.0
 uniform float particleViscosity; // 0.01
 uniform float stiffness; // 1.0
 uniform float smoothingLength; // Taille du noyau
-uniform float gravity;
+uniform vec3 gravity;
 
 // première dérivée du Spiky kernel pour la pression (ok)
 float dWSpiky(float r, float h) {
@@ -117,7 +117,8 @@ vec3 getViscosityForce(Particule p) {
 }
 
 vec3 getGravityForce(Particule p) {
-    return vec3(0.0, 25.0 * gravity, 0);
+    //return vec3(0.0, 25.0 * gravity, 0);
+    return 25.0 * gravity;
 }
 
 vec3 getAppliedForce(Particule p) {
