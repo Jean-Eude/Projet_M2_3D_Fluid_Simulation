@@ -7,8 +7,8 @@ class Models {
         Models();
         ~Models();
 
-        virtual std::vector<unsigned int>getVertices();
-        virtual std::vector<unsigned int>getIndices();
+        virtual std::vector<float> getVertices();
+        virtual std::vector<unsigned int> getIndices();
         virtual int getNbVerts();
         virtual int getNbIndices();
 

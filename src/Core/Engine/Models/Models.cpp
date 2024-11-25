@@ -1,4 +1,4 @@
-#include <Models.hpp
+#include <Models.hpp>
 
 Models::Models() {
 
@@ -8,19 +8,19 @@ Models::~Models() {
     Clear();
 }
 
-Models::std::vector<unsigned int>getVertices() {
+std::vector<float> Models::getVertices() {
     return vertices;
 }
 
-Models::std::vector<unsigned int>getIndices() {
+std::vector<unsigned int> Models::getIndices() {
     return indices;
 }
 
-Models::int getNbVerts() {
+int Models::getNbVerts() {
     return vertices.size();
 }
 
-Models::int getNbIndices() {
+int Models::getNbIndices() {
     return indices.size();
 }
 
