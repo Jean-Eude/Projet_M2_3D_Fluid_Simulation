@@ -40,8 +40,9 @@ uniform float tailleParticule;
 
 void main() {
     position = particles[gl_VertexID].pos; // Lecture depuis le SSBO
-    gl_PointSize = tailleParticule;
     gl_Position = mvp * vec4(position, 1.0);
+    float distanceCam = length(gl_Position.xyz - camPos);
+    gl_PointSize = tailleParticule / distanceCam;
 
     // Normalisation de la position pour la couleur (dans l'intervalle [0, 1])
     vec3 normalizedPos = (position - minAABB) / (maxAABB - minAABB);

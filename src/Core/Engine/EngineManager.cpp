@@ -137,6 +137,7 @@ void EngineManager::OnInitWindowEngine() {
     float Volume = boxSize * boxSize * boxSize;
     float Part_Espacement = pow(Volume / nbParticules, 1.0 / 3.0);
     smoothingLength = 2.0 * Part_Espacement;
+    std::cout << "hello world < " << Volume / nbParticules << '\n';
     //
 
 
@@ -265,7 +266,7 @@ void EngineManager::OnInitWindowEngine() {
     float stiffness = 1.0f;
     SharedServices::GetInstance().RegisterService("stiffness", std::make_shared<float>(stiffness));
 
-    float tailleParticule = 10.f;
+    float tailleParticule = 20.f;
     SharedServices::GetInstance().RegisterService("sizeParti", std::make_shared<float>(tailleParticule));
 
     float restitution = 0.3f;
@@ -515,8 +516,10 @@ void EngineManager::OnUpdateWindowEngine() {
         shaders.useShaderByName("Particule");
         shaders.setBind4fv("Particule", "mvp", 1, GL_FALSE, glm::value_ptr(mvp));
         shaders.setBind1f("Particule", "tailleParticule", *SharedServices::GetInstance().GetService<float>("sizeParti"));
+        shaders.setBind3f("Particule", "camPos", camera.position);
         glPointSize(10.);
         glBindVertexArray(VAO3);
+        glEnable(GL_POINT_SMOOTH);
         glDrawArrays(GL_POINTS, 0, nbParticules);
         glBindVertexArray(0);
 
