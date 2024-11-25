@@ -72,6 +72,8 @@ EngineManager::EngineManager() {
     m_minor = 6;
 }
 
+float smoothingLength;
+
 void EngineManager::OnReadConfigFile(const char* cfg) {
     readConfigFile(cfg);
     
@@ -134,7 +136,7 @@ void EngineManager::OnInitWindowEngine() {
     // Calcul de smoothLength
     float Volume = boxSize * boxSize * boxSize;
     float Part_Espacement = pow(Volume / nbParticules, 1.0 / 3.0);
-    float smoothingLength = 2.0 * Part_Espacement;
+    smoothingLength = 2.0 * Part_Espacement;
     //
 
 
@@ -251,8 +253,6 @@ void EngineManager::OnInitWindowEngine() {
     glBindVertexArray(0);
 
     // Particules 
-    SharedServices::GetInstance().RegisterService("smoothingL", std::make_shared<float>(smoothingLength));
-
     float restDensity = 1000.f;
     SharedServices::GetInstance().RegisterService("particleRestDensity", std::make_shared<float>(restDensity));
 
@@ -271,6 +271,9 @@ void EngineManager::OnInitWindowEngine() {
     float restitution = 0.3f;
     SharedServices::GetInstance().RegisterService("restitution", std::make_shared<float>(restitution));
 
+    float gravity = 9.81f;
+    SharedServices::GetInstance().RegisterService("gravity", std::make_shared<float>(gravity));
+
     SharedServices::GetInstance().RegisterFunction<void, float, std::vector<glm::vec3>&>(
         "updateMesh", std::function<void(float, std::vector<glm::vec3>&)>(updateCubeAndPlane)
     );
@@ -282,7 +285,7 @@ void EngineManager::OnInitWindowEngine() {
     shaders.useComputeShaderByName("particleDensityCS");
     shaders.setCompBind1i("particleDensityCS", "particleCount", nbParticules);
     shaders.setCompBind1f("particleDensityCS", "particleMass", *SharedServices::GetInstance().GetService<float>("mass"));
-    shaders.setCompBind1f("particleDensityCS", "smoothingLength", *SharedServices::GetInstance().GetService<float>("smoothingL"));
+    shaders.setCompBind1f("particleDensityCS", "smoothingLength", smoothingLength);
 
     std::cout << smoothingLength << std::endl;
 
@@ -424,7 +427,7 @@ void EngineManager::OnUpdateWindowEngine() {
 
         shaders.useComputeShaderByName("particleDensityCS");
         shaders.setCompBind1f("particleDensityCS", "particleMass", *SharedServices::GetInstance().GetService<float>("mass"));
-        shaders.setCompBind1f("particleDensityCS", "smoothingLength", *SharedServices::GetInstance().GetService<float>("smoothingL"));
+        shaders.setCompBind1f("particleDensityCS", "smoothingLength", smoothingLength);
 
         shaders.useComputeShaderByName("particlePhysicsCS");
         shaders.setCompBind1f("particlePhysicsCS", "deltaTime", deltaTime);
@@ -433,7 +436,8 @@ void EngineManager::OnUpdateWindowEngine() {
         shaders.setCompBind1f("particlePhysicsCS", "particleMass", *SharedServices::GetInstance().GetService<float>("mass"));
         shaders.setCompBind1f("particlePhysicsCS", "particleViscosity", *SharedServices::GetInstance().GetService<float>("viscosity"));
         shaders.setCompBind1f("particlePhysicsCS", "stiffness", *SharedServices::GetInstance().GetService<float>("stiffness"));
-        shaders.setCompBind1f("particlePhysicsCS", "smoothingLength", *SharedServices::GetInstance().GetService<float>("smoothingL"));
+        shaders.setCompBind1f("particlePhysicsCS", "smoothingLength", smoothingLength);
+        shaders.setCompBind1f("particlePhysicsCS", "gravity", *SharedServices::GetInstance().GetService<float>("gravity"));
 
         shaders.useComputeShaderByName("particleIntegrationCS");
         shaders.setCompBind1f("particleIntegrationCS", "deltaTime", deltaTime);

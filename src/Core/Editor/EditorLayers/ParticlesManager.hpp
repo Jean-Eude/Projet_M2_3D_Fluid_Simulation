@@ -12,13 +12,13 @@ class ParticlesManager : public LayerEditor {
             m_renderFunction = [this]() {
                 //auto nbParticules = SharedServices::GetInstance().GetService<int>("nbParticules");
 
-                auto smoothingL = SharedServices::GetInstance().GetService<float>("smoothingL");
                 auto particleRestDensity = SharedServices::GetInstance().GetService<float>("particleRestDensity");
                 auto mass = SharedServices::GetInstance().GetService<float>("mass");
                 auto visco = SharedServices::GetInstance().GetService<float>("viscosity");
                 auto stiff = SharedServices::GetInstance().GetService<float>("stiffness");
                 auto size = SharedServices::GetInstance().GetService<float>("sizeParti");
                 auto resti = SharedServices::GetInstance().GetService<float>("restitution");
+                auto gravi = SharedServices::GetInstance().GetService<float>("gravity");
 
                 auto updateFunc = SharedServices::GetInstance().GetFunction<void, float, std::vector<glm::vec3>&>("updateMesh");
 
@@ -28,13 +28,13 @@ class ParticlesManager : public LayerEditor {
                 ImGui::Begin("Gestionnaire de particules");
 
                 //ImGui::SliderInt("Nombre de particules", nbParticules.get(), 0.0, 15000);
-                ImGui::SliderFloat("Taille du noyau", smoothingL.get(), 0.01f, 1.f);
                 ImGui::SliderFloat("Rest Density", particleRestDensity.get(), 0.01f, 5000.f);
                 ImGui::SliderFloat("Masse de la particule", mass.get(), 0.01f, 0.5f);
                 ImGui::SliderFloat("Viscosité", visco.get(), 0.01f, 10.f);
                 ImGui::SliderFloat("Stiffness = K", stiff.get(), 0.1f, 10.f);
                 ImGui::SliderFloat("Taille Particule ", size.get(), 0.1f, 50.f);
                 ImGui::SliderFloat("Coefficent de restitution ", resti.get(), 0.01f, 1.f);
+                ImGui::SliderFloat("Gravité ", gravi.get(), -25.0f, 25.f);
 
                 //std::cout << *a << std::endl;
 
