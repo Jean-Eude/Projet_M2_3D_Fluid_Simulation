@@ -3,6 +3,7 @@
 // Header pour intégrer les librairies de base
 
 // En-têtes de base
+#include <any>
 #include <assert.h>
 #include <algorithm>
 #include <atomic>
@@ -34,6 +35,8 @@
 #include <sys/sysinfo.h>
 #include <thread>
 #include <typeindex>
+#include <type_traits>
+#include <tuple>
 #include <unistd.h>
 #include <unordered_map>
 #include <unordered_set>
