@@ -196,6 +196,15 @@ void ShadersManager::setBind1i(const std::string& name, const GLchar* VarName, G
     }
 }
 
+void ShadersManager::setBind1u(const std::string& name, const GLchar* VarName, GLuint v0) {
+    for (auto& shader : shaderQueue) {
+        if (shader->getName() == name) {
+            glUniform1ui(glGetUniformLocation(shader->getShaderID(), VarName), v0);
+            break;
+        }
+    }
+}
+
 void ShadersManager::setBind2f(const std::string& name, const GLchar* VarName, GLfloat v0, GLfloat v1) {
     for (auto& shader : shaderQueue) {
         if (shader->getName() == name) {
@@ -272,6 +281,15 @@ void ShadersManager::setCompBind1i(const std::string& name, const GLchar* VarNam
     for (auto& shader : computeShaderQueue) {
         if (shader->getName() == name) {
             glUniform1i(glGetUniformLocation(shader->getComputeShaderID(), VarName), v0);
+            break;
+        }
+    }
+}
+
+void ShadersManager::setCompBind1u(const std::string& name, const GLchar* VarName, GLuint v0) {
+    for (auto& shader : computeShaderQueue) {
+        if (shader->getName() == name) {
+            glUniform1ui(glGetUniformLocation(shader->getComputeShaderID(), VarName), v0);
             break;
         }
     }

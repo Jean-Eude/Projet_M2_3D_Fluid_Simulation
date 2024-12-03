@@ -15,6 +15,8 @@
 #include <SSBO.hpp>
 #include <Camera.hpp>
 #include <SharedServices.hpp>
+#include <ModelManager.hpp>
+#include <Models.hpp>
 
 class EngineManager : public ParserConfig, public Window, public TimerManager, public GPUBuffersManager {
     public:

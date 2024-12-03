@@ -56,6 +56,7 @@ class ShadersManager : public ThreadManager {
         // Shaders VF
         void setBind1f(const std::string& name, const GLchar* VarName, GLfloat v0);
         void setBind1i(const std::string& name, const GLchar* VarName, GLint v0);
+        void setBind1u(const std::string& name, const GLchar* VarName, GLuint v0);
         void setBind2f(const std::string& name, const GLchar* VarName, GLfloat v0, GLfloat v1);
         void setBind2f(const std::string& name, const GLchar* VarName, glm::vec2 v);
         void setBind3f(const std::string& name, const GLchar* VarName, GLfloat v0, GLfloat v1, GLfloat v2);
@@ -67,6 +68,7 @@ class ShadersManager : public ThreadManager {
         // Shaders C
         void setCompBind1f(const std::string& name, const GLchar* VarName, GLfloat v0);
         void setCompBind1i(const std::string& name, const GLchar* VarName, GLint v0);
+        void setCompBind1u(const std::string& name, const GLchar* VarName, GLuint v0);
         void setCompBind2f(const std::string& name, const GLchar* VarName, GLfloat v0, GLfloat v1);
         void setCompBind2f(const std::string& name, const GLchar* VarName, glm::vec2 v);
         void setCompBind3f(const std::string& name, const GLchar* VarName, GLfloat v0, GLfloat v1, GLfloat v2);
