@@ -39,19 +39,19 @@ class ParticlesManager : public LayerEditor {
 
                 ImGui::Checkbox("Gravité en fonction de la caméra", gravityFollowsCamera.get());
 
-                if (ImGui::Button("Importer un modèle")) {
-                    IGFD::FileDialogConfig config;
-                    config.path = "../Assets/EngineAssets/Models";
-                    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Importer un modèle", ".obj", config);
-                }
-                if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey")) {
-                    if (ImGuiFileDialog::Instance()->IsOk()) { // action if OK
-                        std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-                        std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-                    }
+                // if (ImGui::Button("Importer un modèle")) {
+                //     IGFD::FileDialogConfig config;
+                //     config.path = "../Assets/EngineAssets/Models";
+                //     ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Importer un modèle", ".obj", config);
+                // }
+                // if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey")) {
+                //     if (ImGuiFileDialog::Instance()->IsOk()) { // action if OK
+                //         std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+                //         std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+                //     }
                     
-                    ImGuiFileDialog::Instance()->Close();
-                }
+                //     ImGuiFileDialog::Instance()->Close();
+                // }
 
                 //std::cout << *a << std::endl;
 
