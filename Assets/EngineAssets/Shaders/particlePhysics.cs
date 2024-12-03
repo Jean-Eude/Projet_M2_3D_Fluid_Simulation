@@ -29,11 +29,11 @@ layout(std430, binding = 0) buffer ParticuleBuffer {
     Particule particles[];
 };
 
-layout(std430, binding = 3) buffer GridBuffer {
+layout(std430, binding = 1) buffer GridBuffer {
     Bucket grid[];
 };
 
-layout(std430, binding = 4) buffer BucketBuffer {
+layout(std430, binding = 2) buffer BucketBuffer {
     uint buckets[];
 };
 

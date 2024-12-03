@@ -1,12 +1,6 @@
 #include <LinkedSpatialHashGrid.hpp>
 #include <EngineManager.hpp>
 
-/*LinkedSpatialHashGrid::LinkedSpatialHashGrid(const glm::vec3& min, const glm::vec3& max, unsigned gridSize, const std::vector<Bucket>& grid, const std::vector<unsigned>& buckets) :
-    min{min}, max{max}, gridSize{gridSize}, grid{grid}, buckets{buckets}
-{}*/
-
-static std::vector<unsigned> hashes;
-static std::vector<unsigned> counters;
 static std::vector<LinkedSpatialHashGrid::Bucket> grid;
 static std::vector<unsigned> buckets;
 
@@ -23,6 +17,9 @@ void LinkedSpatialHashGrid::initShaders(EngineManager& manager, const std::vecto
     manager.shaders.setNumGroupsComputeShaderByName("putEntriesCS", numGroupsX, numGroupsY, numGroupsZ, particles.size(), 1, 1);
 
     manager.shaders.useComputeShaderByName("putEntriesCS");
+    manager.shaders.setCompBind3f("putEntriesCS", "minAABB", min);
+    manager.shaders.setCompBind3f("putEntriesCS", "maxAABB", max);
+    manager.shaders.setCompBind1u("putEntriesCS", "gridSize", gridSize);
 
     unsigned bucketCount = gridSize * gridSize * gridSize;
     hashes.resize(particles.size());
@@ -30,8 +27,6 @@ void LinkedSpatialHashGrid::initShaders(EngineManager& manager, const std::vecto
     grid.resize(bucketCount);
     buckets.resize(particles.size());
 
-    manager.ssboM.enqueueSSBO("hashesSSBO", GL_DYNAMIC_DRAW, hashes);
-    manager.ssboM.enqueueSSBO("countersSSBO", GL_DYNAMIC_DRAW, counters);
     manager.ssboM.enqueueSSBO("gridSSBO", GL_DYNAMIC_DRAW, grid);
     manager.ssboM.enqueueSSBO("bucketsSSBO", GL_DYNAMIC_DRAW, buckets);
 }
@@ -39,30 +34,25 @@ void LinkedSpatialHashGrid::initShaders(EngineManager& manager, const std::vecto
 void LinkedSpatialHashGrid::buildParticlesInteraction(EngineManager& manager, const std::vector<Particule>& particles, const glm::vec3& min, const glm::vec3& max, unsigned gridSize) {
     unsigned bucketCount = gridSize * gridSize * gridSize;
 
-    manager.ssboM.bindBufferBaseByName("hashesSSBO");
-    manager.ssboM.bindBufferBaseByName("countersSSBO");
     manager.ssboM.bindBufferBaseByName("gridSSBO");
     manager.ssboM.bindBufferBaseByName("bucketsSSBO");
 
-    std::fill(counters.begin(), counters.end(), 0);
-    manager.ssboM.UpdateSBOByName("countersSSBO", counters);
+    std::fill(grid.begin(), grid.end(), Bucket{0u, 0u});
+    manager.ssboM.UpdateSBOByName("gridSSBO", grid);
 
     manager.shaders.useComputeShaderByName("countEntriesCS");
     manager.shaders.memoryBarrierByName("countEntriesCS", CS_SSBO);
-    manager.ssboM.linkSSBOByName("hashesSSBO", GL_READ_ONLY, hashes);
-    manager.ssboM.linkSSBOByName("countersSSBO", GL_READ_ONLY, counters);
+    manager.ssboM.linkSSBOByName("gridSSBO", GL_READ_ONLY, grid);
 
     unsigned offset = 0;
     for (unsigned i = 0; i < bucketCount; ++i) {
         grid[i].pointer = offset;
+        offset += grid[i].size;
         grid[i].size = 0;
-        offset += counters[i];
     }
 
     manager.ssboM.UpdateSBOByName("gridSSBO", grid);
 
     manager.shaders.useComputeShaderByName("putEntriesCS");
     manager.shaders.memoryBarrierByName("putEntriesCS", CS_SSBO);
-    //manager.ssboM.linkSSBOByName("gridSSBO", GL_READ_ONLY, grid); // pas necessaire, en dessous aussi
-    //manager.ssboM.linkSSBOByName("bucketsSSBO", GL_READ_ONLY, buckets);
 }
