@@ -22,8 +22,6 @@ void LinkedSpatialHashGrid::initShaders(EngineManager& manager, const std::vecto
     manager.shaders.setCompBind1u("putEntriesCS", "gridSize", gridSize);
 
     unsigned bucketCount = gridSize * gridSize * gridSize;
-    hashes.resize(particles.size());
-    counters.resize(bucketCount, 0);
     grid.resize(bucketCount);
     buckets.resize(particles.size());
 
