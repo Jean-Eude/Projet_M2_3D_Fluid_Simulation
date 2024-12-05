@@ -122,7 +122,6 @@ void EngineManager::OnInitWindowEngine() {
     float Volume = boxSize * boxSize * boxSize;
     float Part_Espacement = pow(Volume / nbParticules, 1.0 / 3.0);
     smoothingLength = 2.0 * Part_Espacement;
-    std::cout << "hello world < " << Volume / nbParticules << '\n';
     //
 
 

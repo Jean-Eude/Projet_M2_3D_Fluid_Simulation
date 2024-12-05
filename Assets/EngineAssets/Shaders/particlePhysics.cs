@@ -51,8 +51,8 @@ uniform vec3 minAABB;
 uniform vec3 maxAABB;
 uniform uint gridSize;
 
-vec3 cell(vec3 point) {
-    return floor((point - minAABB) / (maxAABB - minAABB) * gridSize);
+ivec3 cell(vec3 position) {
+    return clamp(ivec3((clamp(position, minAABB, maxAABB) - minAABB) / (maxAABB - minAABB) * float(gridSize)), ivec3(0), ivec3(gridSize - 1));
 }
 
 uint cellHash(uint x, uint y, uint z) {
@@ -99,14 +99,14 @@ float getPressurePoint(float density) {
 vec3 getPressureForce(Particule p) {
     vec3 bmin = clamp(p.pos - vec3(smoothingLength), minAABB, maxAABB);
     vec3 bmax = clamp(p.pos + vec3(smoothingLength), minAABB, maxAABB);
-    vec3 cmin = cell(bmin);
-    vec3 cmax = cell(bmax);
+    ivec3 cmin = cell(bmin);
+    ivec3 cmax = cell(bmax);
     vec3 pressureForce = vec3(0.0);
     float particlePressure = getPressurePoint(p.density);
 
-    for (uint x = uint(cmin.x); x <= uint(cmax.x); ++x) {
-        for (uint y = uint(cmin.y); y <= uint(cmax.y); ++y) {
-            for (uint z = uint(cmin.z); z <= uint(cmax.z); ++z) {
+    for (uint x = cmin.x; x <= cmax.x; ++x) {
+        for (uint y = cmin.y; y <= cmax.y; ++y) {
+            for (uint z = cmin.z; z <= cmax.z; ++z) {
                 uint bucketHash = cellHash(x, y, z);
                 Bucket bucket = grid[bucketHash];
 
@@ -138,13 +138,13 @@ vec3 getPressureForce(Particule p) {
 vec3 getViscosityForce(Particule p) {
     vec3 bmin = clamp(p.pos - vec3(smoothingLength), minAABB, maxAABB);
     vec3 bmax = clamp(p.pos + vec3(smoothingLength), minAABB, maxAABB);
-    vec3 cmin = cell(bmin);
-    vec3 cmax = cell(bmax);
+    ivec3 cmin = cell(bmin);
+    ivec3 cmax = cell(bmax);
     vec3 viscosityForce = vec3(0.0);
 
-    for (uint x = uint(cmin.x); x <= uint(cmax.x); ++x) {
-        for (uint y = uint(cmin.y); y <= uint(cmax.y); ++y) {
-            for (uint z = uint(cmin.z); z <= uint(cmax.z); ++z) {
+    for (uint x = cmin.x; x <= cmax.x; ++x) {
+        for (uint y = cmin.y; y <= cmax.y; ++y) {
+            for (uint z = cmin.z; z <= cmax.z; ++z) {
                 uint bucketHash = cellHash(x, y, z);
                 Bucket bucket = grid[bucketHash];
 
