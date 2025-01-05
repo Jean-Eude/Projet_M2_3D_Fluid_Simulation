@@ -44,8 +44,7 @@ void Camera::rotation(){
     currentQuaternion.axis.y = currentQuaternion.axis.y * sin((theta / 2) * 3.1416 / 180);
     currentQuaternion.axis.z = currentQuaternion.axis.z * sin((theta / 2) * 3.1416 / 180);
     
-    cosValue_2 = (currentQuaternion.cosine * lastQuaternion.cosine)
-                         - glm::dot(currentQuaternion.axis, lastQuaternion.axis);
+    cosValue_2 = (currentQuaternion.cosine * lastQuaternion.cosine) - glm::dot(currentQuaternion.axis, lastQuaternion.axis);
     
     
     glm::vec3 temporaryVector;
@@ -74,6 +73,13 @@ void Camera::rotation(){
 void Camera::replace(){
     lastQuaternion.cosine = cosValue_2;
     lastQuaternion.axis = rotationalAxis_2;
+}
+
+glm::mat4 Camera::getViewMatrix() {
+    glm::vec3 forward = getUnitVector(currentPos - position);
+    glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0.0f, 1.0f, 0.0f))); 
+    glm::vec3 adjustedUp = glm::normalize(glm::cross(right, forward)); 
+    return glm::lookAt(position, position + forward, adjustedUp);
 }
 
 void Camera::setFlag(bool newFlag) {

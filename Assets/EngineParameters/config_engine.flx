@@ -1,7 +1,7 @@
 ############### Window ###############
 window_width = 1280
 window_height = 720
-window_title = Simulation de Fluides
+window_title = Projet 3D - Simulation de fluides
 window_major = 4
 window_minor = 6
 window_vsync = 1

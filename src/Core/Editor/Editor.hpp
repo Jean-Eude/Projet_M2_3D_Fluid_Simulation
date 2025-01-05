@@ -7,6 +7,7 @@
 #include <ToolsEditorLayer.hpp>
 #include <LayerStackEditor.hpp>
 #include <ParticlesManager.hpp>
+#include <ParametersLayerEditor.hpp>
 
 class Editor : public EditorManager {
     public:

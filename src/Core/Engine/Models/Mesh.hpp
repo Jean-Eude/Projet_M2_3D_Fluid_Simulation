@@ -8,17 +8,17 @@
 #include <assimp/postprocess.h>
 
 class Mesh : public Models {
-public:
-    Mesh(const std::string& filepath);
+    public:
+        Mesh(const std::string& filepath);
 
-    void InitVerticesAndIndices() override;
-    void bindBuffers() override;
-    void Update() override;
+        void InitVerticesAndIndices() override;
+        void bindBuffers() override;
+        void Update() override;
 
-private:
-    std::string filepath;
-    static const bool registered;
+    private:
+        std::string filepath;
+        static const bool registered;
 
-    void processNode(aiNode* node, const aiScene* scene);
-    void processMesh(aiMesh* mesh, const aiScene* scene);
+        void processNode(aiNode* node, const aiScene* scene);
+        void processMesh(aiMesh* mesh, const aiScene* scene);
 };

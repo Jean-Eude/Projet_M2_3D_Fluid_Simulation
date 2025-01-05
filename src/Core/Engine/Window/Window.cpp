@@ -78,15 +78,19 @@ void Window::OnInitWindow(int m_width, int m_height, std::string m_title, unsign
     }
 
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
 
+    /*
+    glDepthFunc(GL_LESS);
+    glEnable(GL_CULL_FACE);
+    */
+   
     // Pour modifier la taille des points dans les shaders
     glEnable(GL_PROGRAM_POINT_SIZE);
 }
 
 void Window::OnUpdateWindow() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 }
 
 void Window::OnDestroyWindow() {

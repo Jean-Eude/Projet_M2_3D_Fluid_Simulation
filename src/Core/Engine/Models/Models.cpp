@@ -1,7 +1,7 @@
 #include <Models.hpp>
 #include <ModelManager.hpp>
 
-Models::Models() : EBO(0), VBO(0), VAO(0) {}
+Models::Models() : EBO(0), VBO(0), VAO(0), minAABB(glm::vec3(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity())), maxAABB(glm::vec3(-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity())) {}
 
 Models::~Models() {
     Clear();
@@ -31,6 +31,7 @@ void Models::Init() {
 void Models::Clear() {
     vertices.clear();
     indices.clear();
+
     if (VAO) {
         glDeleteVertexArrays(1, &VAO);
         VAO = 0;
@@ -43,4 +44,12 @@ void Models::Clear() {
         glDeleteBuffers(1, &EBO);
         EBO = 0;
     }
+}
+
+glm::vec3 Models::getBBmin() {
+    return minAABB;
+}
+
+glm::vec3 Models::getBBmax() {
+    return maxAABB;
 }

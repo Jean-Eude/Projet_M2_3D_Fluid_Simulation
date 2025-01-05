@@ -5,6 +5,8 @@
 
 #include <GPUBuffersManager.hpp>
 
+#include <SharedServices.hpp>
+
 class ViewportEditorLayer : public LayerEditor, public GPUBuffersManager {
     public:
         ViewportEditorLayer(std::string name) : LayerEditor(name) {
@@ -15,11 +17,11 @@ class ViewportEditorLayer : public LayerEditor, public GPUBuffersManager {
                 float window_width = ImGui::GetContentRegionAvail().x;
                 float window_height = ImGui::GetContentRegionAvail().y;
 
-                m_fbo.rescaleFBO(window_width, window_height);
+                getGPUBuffersManager()->rescaleFBO("fbom", window_width, window_height);
 
                 ImVec2 pos = ImGui::GetCursorScreenPos();
                 ImGui::GetWindowDrawList()->AddImage(
-                    (void *)m_fbo.texid, 
+                    reinterpret_cast<void*>(static_cast<uintptr_t>(getGPUBuffersManager()->getFBO_IDByName("fbom"))),
                     ImVec2(pos.x, pos.y), 
                     ImVec2(pos.x + window_width, pos.y + window_height), 
                     ImVec2(0, 1), 
@@ -33,7 +35,8 @@ class ViewportEditorLayer : public LayerEditor, public GPUBuffersManager {
         virtual ~ViewportEditorLayer() = default;
 
         void OnInit() override {
-            m_fbo.createFBO(1280, 720);
+            //m_fbo.createFBO(1280, 720, FBOType::RENDER_TO_SCREEN);
+            getGPUBuffersManager()->enqueueFBO("fbom", 1280, 720, FBOType::RENDER_TO_SCREEN);
         }
 
         void OnRender() override {
@@ -42,4 +45,12 @@ class ViewportEditorLayer : public LayerEditor, public GPUBuffersManager {
 
     private:
         std::function<void()> m_renderFunction;
+
+        GPUBuffersManager* getGPUBuffersManager() {
+            auto gpuBuffersManager = SharedServices::GetInstance().GetService<GPUBuffersManager>("fbo");
+            if (!gpuBuffersManager) {
+                std::cerr << "Error: GPUBuffersManager service not found for ViewportFBO." << std::endl;
+            }
+            return gpuBuffersManager.get();
+        }
 };

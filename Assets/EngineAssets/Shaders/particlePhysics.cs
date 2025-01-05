@@ -20,8 +20,21 @@ struct Particule {
     int isActive;
 };
 
+struct Bucket {
+    uint pointer;
+    uint size;
+};
+
 layout(std430, binding = 0) buffer ParticuleBuffer {
     Particule particles[];
+};
+
+layout(std430, binding = 1) buffer GridBuffer {
+    Bucket grid[];
+};
+
+layout(std430, binding = 2) buffer BucketBuffer {
+    uint buckets[];
 };
 
 uniform float deltaTime;
@@ -33,6 +46,18 @@ uniform float particleViscosity; // 0.01
 uniform float stiffness; // 1.0
 uniform float smoothingLength; // Taille du noyau
 uniform vec3 gravity;
+
+uniform vec3 minAABB;
+uniform vec3 maxAABB;
+uniform uint gridSize;
+
+ivec3 cell(vec3 position) {
+    return clamp(ivec3((clamp(position, minAABB, maxAABB) - minAABB) / (maxAABB - minAABB) * float(gridSize)), ivec3(0), ivec3(gridSize - 1));
+}
+
+uint cellHash(uint x, uint y, uint z) {
+    return clamp(x, 0, gridSize - 1) + gridSize * (clamp(y, 0, gridSize - 1) + gridSize * clamp(z, 0, gridSize - 1));
+}
 
 // première dérivée du Spiky kernel pour la pression (ok)
 float dWSpiky(float r, float h) {
@@ -72,53 +97,82 @@ float getPressurePoint(float density) {
 // https://wickedengine.net/2018/05/scalabe-gpu-fluid-simulation/comment-page-1/
 
 vec3 getPressureForce(Particule p) {
-    uint id = gl_GlobalInvocationID.x;
+    vec3 bmin = clamp(p.pos - vec3(smoothingLength), minAABB, maxAABB);
+    vec3 bmax = clamp(p.pos + vec3(smoothingLength), minAABB, maxAABB);
+    ivec3 cmin = cell(bmin);
+    ivec3 cmax = cell(bmax);
     vec3 pressureForce = vec3(0.0);
     float particlePressure = getPressurePoint(p.density);
-    for (int i = 0; i < particleCount; ++i) {
-        vec3 particleDistance = p.pos - particles[i].pos;
-        float radius2 = dot(particleDistance, particleDistance);
 
-        if (radius2 > smoothingLength * smoothingLength || radius2 < 1e-6) {
-            continue;
+    for (uint x = cmin.x; x <= cmax.x; ++x) {
+        for (uint y = cmin.y; y <= cmax.y; ++y) {
+            for (uint z = cmin.z; z <= cmax.z; ++z) {
+                uint bucketHash = cellHash(x, y, z);
+                Bucket bucket = grid[bucketHash];
+
+                for (uint l = 0; l < bucket.size; ++l) {
+                    uint id2 = buckets[bucket.pointer + l];
+
+                    vec3 particleDistance = p.pos - particles[id2].pos;
+                    float radius2 = dot(particleDistance, particleDistance);
+
+                    if (radius2 > smoothingLength * smoothingLength || radius2 < 1e-6) {
+                        continue;
+                    }
+
+                    float radius = sqrt(radius2);      
+                    vec3 direction = particleDistance / radius;
+
+                    float safeDensity = max(p.density, 1e-6);
+                    float neighborDensity = max(particles[id2].density, 1e-6);
+
+                    float neighborPressure = getPressurePoint(particles[id2].density);
+                    pressureForce -= particleMass * ((particlePressure / (safeDensity * safeDensity)) + (neighborPressure / (neighborDensity * neighborDensity))) * dWSpiky(radius, smoothingLength) * direction;
+                }
+            }
         }
-
-        float radius = sqrt(radius2);      
-        vec3 direction = particleDistance / radius;
-
-        float safeDensity = max(p.density, 1e-6);
-        float neighborDensity = max(particles[i].density, 1e-6);
-
-        float neighborPressure = getPressurePoint(particles[i].density);
-        pressureForce -= particleMass * ((particlePressure / (safeDensity * safeDensity)) + (neighborPressure / (neighborDensity * neighborDensity))) * dWSpiky(radius, smoothingLength) * direction;
     }
-
     return pressureForce;
 }
 
 vec3 getViscosityForce(Particule p) {
+    vec3 bmin = clamp(p.pos - vec3(smoothingLength), minAABB, maxAABB);
+    vec3 bmax = clamp(p.pos + vec3(smoothingLength), minAABB, maxAABB);
+    ivec3 cmin = cell(bmin);
+    ivec3 cmax = cell(bmax);
     vec3 viscosityForce = vec3(0.0);
-    for (int i = 0; i < particleCount; ++i) {
-        vec3 particleDistance = p.pos - particles[i].pos;
-        float radius2 = dot(particleDistance, particleDistance);
 
-        if (radius2 > smoothingLength * smoothingLength || radius2 < 1e-6) {
-            continue;
+    for (uint x = cmin.x; x <= cmax.x; ++x) {
+        for (uint y = cmin.y; y <= cmax.y; ++y) {
+            for (uint z = cmin.z; z <= cmax.z; ++z) {
+                uint bucketHash = cellHash(x, y, z);
+                Bucket bucket = grid[bucketHash];
+
+                for (uint l = 0; l < bucket.size; ++l) {
+                    uint id2 = buckets[bucket.pointer + l];
+
+                    vec3 particleDistance = p.pos - particles[id2].pos;
+                    float radius2 = dot(particleDistance, particleDistance);
+
+                    if (radius2 > smoothingLength * smoothingLength || radius2 < 1e-6) {
+                        continue;
+                    }
+
+                    float radius = sqrt(radius2);
+
+                    float neighborDensity = max(particles[id2].density, 1e-6);
+
+                    viscosityForce += particleMass * (particles[id2].velocity - p.velocity) / neighborDensity * d2WLaplacian(radius, smoothingLength);
+                }
+            }
         }
-
-        float radius = sqrt(radius2);
-
-        float neighborDensity = max(particles[i].density, 1e-6);
-
-        viscosityForce += particleMass * (particles[i].velocity - p.velocity) / neighborDensity * d2WLaplacian(radius, smoothingLength);
     }
-
     return particleViscosity * viscosityForce;
 }
 
 vec3 getGravityForce(Particule p) {
     //return vec3(0.0, 25.0 * gravity, 0);
-    return 25.0 * gravity;
+    return 50.0 * gravity;
 }
 
 vec3 getAppliedForce(Particule p) {

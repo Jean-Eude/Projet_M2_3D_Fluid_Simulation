@@ -196,6 +196,15 @@ void ShadersManager::setBind1i(const std::string& name, const GLchar* VarName, G
     }
 }
 
+void ShadersManager::setBind1u(const std::string& name, const GLchar* VarName, GLuint v0) {
+    for (auto& shader : shaderQueue) {
+        if (shader->getName() == name) {
+            glUniform1ui(glGetUniformLocation(shader->getShaderID(), VarName), v0);
+            break;
+        }
+    }
+}
+
 void ShadersManager::setBind2f(const std::string& name, const GLchar* VarName, GLfloat v0, GLfloat v1) {
     for (auto& shader : shaderQueue) {
         if (shader->getName() == name) {
@@ -227,6 +236,15 @@ void ShadersManager::setBind3f(const std::string& name, const GLchar* VarName, g
     for (auto& shader : shaderQueue) {
         if (shader->getName() == name) {
             glUniform3f(glGetUniformLocation(shader->getShaderID(), VarName), v.x, v.y, v.z);
+            break;
+        }
+    }
+}
+
+void ShadersManager::setBind3fv(const std::string& name, const GLchar* VarName, GLsizei count, GLboolean transpose, const GLfloat *value) {
+    for (auto& shader : shaderQueue) {
+        if (shader->getName() == name) {
+            glUniformMatrix3fv(glGetUniformLocation(shader->getShaderID(), VarName), count, transpose, value);
             break;
         }
     }
@@ -277,6 +295,15 @@ void ShadersManager::setCompBind1i(const std::string& name, const GLchar* VarNam
     }
 }
 
+void ShadersManager::setCompBind1u(const std::string& name, const GLchar* VarName, GLuint v0) {
+    for (auto& shader : computeShaderQueue) {
+        if (shader->getName() == name) {
+            glUniform1ui(glGetUniformLocation(shader->getComputeShaderID(), VarName), v0);
+            break;
+        }
+    }
+}
+
 void ShadersManager::setCompBind2f(const std::string& name, const GLchar* VarName, GLfloat v0, GLfloat v1) {
     for (auto& shader : computeShaderQueue) {
         if (shader->getName() == name) {
@@ -308,6 +335,15 @@ void ShadersManager::setCompBind3f(const std::string& name, const GLchar* VarNam
     for (auto& shader : computeShaderQueue) {
         if (shader->getName() == name) {
             glUniform3f(glGetUniformLocation(shader->getComputeShaderID(), VarName), v.x, v.y, v.z);
+            break;
+        }
+    }
+}
+
+void ShadersManager::setCompBind3fv(const std::string& name, const GLchar* VarName, GLsizei count, GLboolean transpose, const GLfloat *value) {
+    for (auto& shader : computeShaderQueue) {
+        if (shader->getName() == name) {
+            glUniformMatrix3fv(glGetUniformLocation(shader->getComputeShaderID(), VarName), count, transpose, value);
             break;
         }
     }

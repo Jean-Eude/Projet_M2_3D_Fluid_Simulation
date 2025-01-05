@@ -2,16 +2,27 @@
 
 #include <HeadersBase.hpp>
 
+enum class FBOType {
+    RENDER_TO_SCREEN,       // FBO classique pour le rendu (e.g., ImGui)
+    ENVIRONMENT_MAPPING,    // FBO pour les cube maps (environnement)
+    SHADOW_MAP              // FBO pour les shadow maps (par exemple, depth-only)
+};
+
 class FBO {
     public :
         FBO() = default;
         ~FBO() = default;
         
-        void createFBO(int width, int height);
-        void bindFBO();
-        void unbindFBO();
+        void createFBO(int width, int height, FBOType type);
         void rescaleMainWindow(int width, int height);
         void rescaleFBO(int width, int height);
+
+        void bindFBO();
+        void unbindFBO();
+        void bindRBO();
+        void unbindRBO();
+        void bindTexture();
+        void unbindTexture();
 
         GLuint getTexID();
         GLuint getRBO();
@@ -28,4 +39,8 @@ class FBO {
 
         int m_fboWidth, m_fboHeight;
         int m_winWidth, m_winHeight;
+
+        GLenum texType;
+
+        FBOType fboType;
 };

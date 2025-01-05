@@ -20,13 +20,38 @@ struct Particule {
     int isActive;
 };
 
+struct Bucket {
+    uint pointer;
+    uint size;
+};
+
 layout(std430, binding = 0) buffer ParticuleBuffer {
     Particule particles[];
+};
+
+layout(std430, binding = 1) buffer GridBuffer {
+    Bucket grid[];
+};
+
+layout(std430, binding = 2) buffer BucketBuffer {
+    uint buckets[];
 };
 
 uniform int particleCount;
 uniform float particleMass; // 1.0
 uniform float smoothingLength; // Taille du noyau
+
+uniform vec3 minAABB;
+uniform vec3 maxAABB;
+uniform uint gridSize;
+
+ivec3 cell(vec3 position) {
+    return clamp(ivec3((clamp(position, minAABB, maxAABB) - minAABB) / (maxAABB - minAABB) * float(gridSize)), ivec3(0), ivec3(gridSize - 1));
+}
+
+uint cellHash(uint x, uint y, uint z) {
+    return clamp(x, 0, gridSize - 1) + gridSize * (clamp(y, 0, gridSize - 1) + gridSize * clamp(z, 0, gridSize - 1));
+}
 
 // kernel Poly6 pour la densité (ok)
 float wPoly6(float r, float h) {
@@ -41,13 +66,31 @@ float wPoly6(float r, float h) {
 }
 
 float getDensity(Particule p) {
+    vec3 bmin = clamp(p.pos - vec3(smoothingLength), minAABB, maxAABB);
+    vec3 bmax = clamp(p.pos + vec3(smoothingLength), minAABB, maxAABB);
+    ivec3 cmin = cell(bmin);
+    ivec3 cmax = cell(bmax);
     float density = 0.0;
-    for (int i = 0; i < particleCount; ++i) {
-        vec3 diff = particles[i].pos - p.pos;  
-        float radius2 = dot(diff, diff);      
-        if (radius2 > smoothingLength * smoothingLength) continue; 
-        float radius = sqrt(radius2);        
-        density += particleMass * wPoly6(radius, smoothingLength);
+
+    for (uint x = cmin.x; x <= cmax.x; ++x) {
+        for (uint y = cmin.y; y <= cmax.y; ++y) {
+            for (uint z = cmin.z; z <= cmax.z; ++z) {
+                uint bucketHash = cellHash(x, y, z);
+                Bucket bucket = grid[bucketHash];
+
+                for (uint l = 0; l < bucket.size; ++l) {
+                    uint id2 = buckets[bucket.pointer + l];
+
+                    vec3 diff = particles[id2].pos - p.pos;  
+                    float radius2 = dot(diff, diff);      
+                    if (radius2 > smoothingLength * smoothingLength) {
+                        continue;
+                    }
+                    float radius = sqrt(radius2);        
+                    density += particleMass * wPoly6(radius, smoothingLength);
+                }
+            }
+        }
     }
     return density;
 }

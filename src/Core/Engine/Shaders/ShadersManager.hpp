@@ -56,10 +56,12 @@ class ShadersManager : public ThreadManager {
         // Shaders VF
         void setBind1f(const std::string& name, const GLchar* VarName, GLfloat v0);
         void setBind1i(const std::string& name, const GLchar* VarName, GLint v0);
+        void setBind1u(const std::string& name, const GLchar* VarName, GLuint v0);
         void setBind2f(const std::string& name, const GLchar* VarName, GLfloat v0, GLfloat v1);
         void setBind2f(const std::string& name, const GLchar* VarName, glm::vec2 v);
         void setBind3f(const std::string& name, const GLchar* VarName, GLfloat v0, GLfloat v1, GLfloat v2);
         void setBind3f(const std::string& name, const GLchar* VarName, glm::vec3 v);
+        void setBind3fv(const std::string& name, const GLchar* VarName, GLsizei count, GLboolean transpose, const GLfloat *value);
         void setBind4f(const std::string& name, const GLchar* VarName, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
         void setBind4f(const std::string& name, const GLchar* VarName, glm::vec4 v);
         void setBind4fv(const std::string& name, const GLchar* VarName, GLsizei count, GLboolean transpose, const GLfloat *value);
@@ -67,10 +69,12 @@ class ShadersManager : public ThreadManager {
         // Shaders C
         void setCompBind1f(const std::string& name, const GLchar* VarName, GLfloat v0);
         void setCompBind1i(const std::string& name, const GLchar* VarName, GLint v0);
+        void setCompBind1u(const std::string& name, const GLchar* VarName, GLuint v0);
         void setCompBind2f(const std::string& name, const GLchar* VarName, GLfloat v0, GLfloat v1);
         void setCompBind2f(const std::string& name, const GLchar* VarName, glm::vec2 v);
         void setCompBind3f(const std::string& name, const GLchar* VarName, GLfloat v0, GLfloat v1, GLfloat v2);
         void setCompBind3f(const std::string& name, const GLchar* VarName, glm::vec3 v);
+        void setCompBind3fv(const std::string& name, const GLchar* VarName, GLsizei count, GLboolean transpose, const GLfloat *value);
         void setCompBind4f(const std::string& name, const GLchar* VarName, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
         void setCompBind4f(const std::string& name, const GLchar* VarName, glm::vec4 v);
         void setCompBind4fv(const std::string& name, const GLchar* VarName, GLsizei count, GLboolean transpose, const GLfloat *value);

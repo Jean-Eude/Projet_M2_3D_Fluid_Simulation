@@ -5,9 +5,25 @@
 
 class GPUBuffersManager {
     public:
-        GPUBuffersManager() : nextUnit(0) {};
+        GPUBuffersManager() : nextUnit(0) {}
         ~GPUBuffersManager() = default;
 
+        // FBO Management
+        void enqueueFBO(const std::string& name, int width, int height, FBOType type);
+        void dequeueFBO(const std::string& name);
+        void rescaleFBO(const std::string& name, int width, int height);
+
+        void dequeueAllFBO();
+        void bindFBO(const std::string& name);
+        void unbindFBO(const std::string& name);
+
+        GLuint getFBO_IDByName(const std::string& name);
+        GLuint getFBO_Tex_IDByName(const std::string& name);
+        std::pair<int, int> getFBODimensionsByName(const std::string& name);
+        FBOType getFBOTypeByName(const std::string& name);
+
+
+        // SSBO Management
         template <typename T>
         void enqueueSSBO(const std::string& name, GLenum usage, const std::vector<T>& data);
 
@@ -29,17 +45,21 @@ class GPUBuffersManager {
         void bindBufferBaseByName(const std::string& name);
         void bindBufferBaseAll();
 
-
         GLuint getSSBO_IDByName(const std::string& name);
         GLenum getSSBO_UsageByName(const std::string& name);
         GLenum getSSBO_ModeByName(const std::string& name);
 
-        unsigned int getBufferUnit(const std::string& name); 
+        unsigned int getBufferUnit(const std::string& name);
 
     private:
+        // SSBO Management
         std::map<std::string, std::shared_ptr<SSBO>> buffersQueue;
         std::map<std::string, unsigned int> bufferUnits;
         unsigned int nextUnit;
+
+        // FBO Management
+        std::map<std::string, FBO> fboQueue;
+        std::map<std::string, FBOType> fboTypes;
 
     protected:
         static FBO m_fbo;
@@ -99,3 +119,5 @@ void GPUBuffersManager::UpdateSBOAll(const std::vector<T>& newData) {
         buffer->updateSSBO(newData);
     }
 }
+
+

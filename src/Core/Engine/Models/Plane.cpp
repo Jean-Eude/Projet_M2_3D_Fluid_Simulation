@@ -1,37 +1,47 @@
 #include <Plane.hpp>
 
-const bool Plane::registered = ModelManager::registerModel<Plane, int>("Plane");
+const bool Plane::registered = ModelManager::registerModel<Plane, float, int, bool>("Plane");
 
-Plane::Plane(int gridSize) : gridSize(gridSize) {}
+Plane::Plane(float size, int div, bool isBottom) : size(size), div(div), isBottom(isBottom) {}
 
 void Plane::InitVerticesAndIndices() {
-    this->gridSize = gridSize;
-    const float cellSize = 1.0f / gridSize;
+    vertices.clear();
+    indices.clear();
 
-    // Centrage
-    const float halfSize = (gridSize * cellSize) / 2.0f;
+    float cellSize = size / div;
+    float halfSize = size / 2.0f;
 
-    // Génération des sommets
-    for (int z = 0; z <= gridSize; ++z) {
-        for (int x = 0; x <= gridSize; ++x) {
+    for (int z = 0; z <= div; ++z) {
+        for (int x = 0; x <= div; ++x) {
             float xPos = x * cellSize - halfSize;
             float zPos = z * cellSize - halfSize;
 
-            vertices.push_back(xPos);    
-            vertices.push_back(0.0f);  
+            // Sommets
+            vertices.push_back(xPos); 
+            if(isBottom == false) {
+                vertices.push_back(0.0f);  
+            } else {
+                vertices.push_back(halfSize);       
+            }   
             vertices.push_back(zPos);
 
-            vertices.push_back((float)x / gridSize); 
-            vertices.push_back((float)z / gridSize);
+            // Coords de textures
+            vertices.push_back((float)x / div); 
+            vertices.push_back((float)z / div);
+
+            // Normales
+            vertices.push_back(0.0f);
+            vertices.push_back(1.0f);
+            vertices.push_back(0.0f);
         }
     }
 
     // Génération des indices
-    for (int z = 0; z < gridSize; ++z) {
-        for (int x = 0; x < gridSize; ++x) {
-            int topLeft = z * (gridSize + 1) + x;
+    for (int z = 0; z < div; ++z) {
+        for (int x = 0; x < div; ++x) {
+            int topLeft = z * (div + 1) + x;
             int topRight = topLeft + 1;
-            int bottomLeft = (z + 1) * (gridSize + 1) + x;
+            int bottomLeft = (z + 1) * (div + 1) + x;
             int bottomRight = bottomLeft + 1;
 
             // 1er triangle
@@ -61,14 +71,17 @@ void Plane::bindBuffers() {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 
     // Attribut de position
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
     // Attribut de coordonnées de texture
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    // Nettoyage des liens
+    // Attribut de normale
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }

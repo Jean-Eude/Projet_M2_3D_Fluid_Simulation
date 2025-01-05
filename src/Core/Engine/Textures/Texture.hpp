@@ -6,10 +6,14 @@ enum TexType {
     TEX_1D,
     TEX_2D, 
     TEX_3D,
+    TEX_CUBEMAP,
     TEX_COMPUTE_SHADER,
 };
 
 enum TexInternalFormat {
+    TEX_R16F,
+    TEX_RGB16F,
+    TEX_RGBA16F,
     TEX_R32F,
     TEX_RGB32F,
     TEX_RGBA32F,

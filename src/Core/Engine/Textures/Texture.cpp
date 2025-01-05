@@ -8,322 +8,191 @@ Texture::~Texture() {
 
 void Texture::loadTexture(const std::string& TexPath, TexType type, bool isFlip, GLint mode, GLint interpolation) {
     this->type = type;
-
-    // Ordre important ici !
     this->texPath = TexPath;
     this->isFlip = isFlip;
 
-    switch (this->type) {
-        case TEX_1D:
-            this->target = GL_TEXTURE_1D;
-            break;
-        case TEX_2D:
-            this->target = GL_TEXTURE_2D;
-            break;
-        case TEX_3D:
-            this->target = GL_TEXTURE_3D;
-            break;
+    switch (type) {
+        case TEX_1D: target = GL_TEXTURE_1D; break;
+        case TEX_2D: target = GL_TEXTURE_2D; break;
+        case TEX_3D: target = GL_TEXTURE_3D; break;
+        case TEX_CUBEMAP: target = GL_TEXTURE_CUBE_MAP; break;
         default:
+            std::cerr << "Unsupported texture type!" << std::endl;
             return;
     }
 
-    this->mode = mode;
-    this->interpolation = interpolation;
-    GLenum dataType = GL_UNSIGNED_BYTE;
+    if (texID == 0) {
+        glGenTextures(1, &texID);
+    }
+    glBindTexture(target, texID);
 
-    if (this->texID == 0) {
-        // Créer un nouvel ID
-        glGenTextures(1, &this->texID);
+    glTexParameteri(target, GL_TEXTURE_WRAP_S, mode);
+    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, interpolation);
+    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, interpolation);
+    if (target == GL_TEXTURE_2D || target == GL_TEXTURE_3D || target == GL_TEXTURE_CUBE_MAP) {
+        glTexParameteri(target, GL_TEXTURE_WRAP_T, mode);
+    }
+    if (target == GL_TEXTURE_3D || target == GL_TEXTURE_CUBE_MAP) {
+        glTexParameteri(target, GL_TEXTURE_WRAP_R, mode);
     }
 
-    glBindTexture(this->target, this->texID);
-    // Fin ordre important ici !
+    if (type == TEX_CUBEMAP) {
+        std::vector<std::string> faces;
+        std::stringstream ss(TexPath);
+        std::string facePath;
+        while (std::getline(ss, facePath, '|')) {
+            faces.push_back(facePath);
+        }
 
-    if(this->target == GL_TEXTURE_1D) {
-        glTexParameteri(this->target, GL_TEXTURE_WRAP_S, this->mode);
-        glTexParameteri(this->target, GL_TEXTURE_MIN_FILTER, this->interpolation);
-        glTexParameteri(this->target, GL_TEXTURE_MAG_FILTER, this->interpolation);
+        if (faces.size() != 6) {
+            std::cerr << "Cubemap requires exactly 6 textures!" << std::endl;
+            return;
+        }
 
-        int width, height, nrChannels;
-        stbi_set_flip_vertically_on_load(isFlip);
-        unsigned char *data = stbi_load(this->texPath.c_str(), &width, &height, &nrChannels, 0);
-
-        this->width = width;
-        this->height = 0;
-        this->depth = 0;
-
-        if (data) {
-            GLenum format;
-            if (nrChannels == 1)
-                format = GL_RED;
-            else if (nrChannels == 3)
-                format = GL_RGB; 
-            else if (nrChannels == 4)
-                format = GL_RGBA; 
-            else {
-                //std::cout << "Unsupported number of channels: " << nrChannels << std::endl;
-                stbi_image_free(data);
-                return; 
+        for (unsigned int i = 0; i < faces.size(); ++i) {
+            stbi_set_flip_vertically_on_load(false);
+            int width, height, nrChannels;
+            void* data = nullptr;
+            GLenum dataType;
+            
+            if (stbi_is_hdr(faces[i].c_str())) {
+                data = stbi_loadf(faces[i].c_str(), &width, &height, &nrChannels, 0);
+                dataType = GL_FLOAT;
+            } else {
+                data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+                dataType = GL_UNSIGNED_BYTE;
             }
 
-            glTexImage1D(this->target, 0, format, width, 0, format, dataType, data);
-            glGenerateMipmap(this->target);
-        } else {
-            //std::cout << "Failed to load texture" << std::endl;
-        }
-        stbi_image_free(data);
-    } else if(this->target == GL_TEXTURE_2D) {
-        glTexParameteri(this->target, GL_TEXTURE_WRAP_S, this->mode);
-        glTexParameteri(this->target, GL_TEXTURE_WRAP_T, this->mode);
-        glTexParameteri(this->target, GL_TEXTURE_MIN_FILTER, this->interpolation);
-        glTexParameteri(this->target, GL_TEXTURE_MAG_FILTER, this->interpolation);
+            if (data) {
+                GLenum format = (nrChannels == 3) ? GL_RGB : GL_RGBA;
+                GLenum internalFormat = (dataType == GL_FLOAT) ? 
+                                        ((nrChannels == 3) ? GL_RGB16F : GL_RGBA16F) : 
+                                        ((nrChannels == 3) ? GL_RGB8 : GL_RGBA8);
 
-        int width, height, nrChannels;
-        stbi_set_flip_vertically_on_load(isFlip);
-        unsigned char *data = stbi_load(this->texPath.c_str(), &width, &height, &nrChannels, 0);
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, width, height, 0, format, dataType, data);
+                stbi_image_free(data);
+            } else {
+                std::cerr << "Failed to load cubemap texture at: " << faces[i] << std::endl;
+                stbi_image_free(data);
+                return;
+            }
+        }
+
+        glGenerateMipmap(target);
+        return;
+    }
+
+    int width, height, nrChannels;
+    void* data = nullptr;
+    GLenum dataType;
+
+    stbi_set_flip_vertically_on_load(isFlip);
+
+    if (stbi_is_hdr(TexPath.c_str())) {
+        data = stbi_loadf(TexPath.c_str(), &width, &height, &nrChannels, 0);
+        dataType = GL_FLOAT;
+    } else {
+        data = stbi_load(TexPath.c_str(), &width, &height, &nrChannels, 0);
+        dataType = GL_UNSIGNED_BYTE;
+    }
+
+    if (data) {
+        GLenum format, internalFormat;
+        switch (nrChannels) {
+            case 1: format = GL_RED; internalFormat = (dataType == GL_FLOAT) ? GL_R16F : GL_R8; break;
+            case 3: format = GL_RGB; internalFormat = (dataType == GL_FLOAT) ? GL_RGB16F : GL_RGB8; break;
+            case 4: format = GL_RGBA; internalFormat = (dataType == GL_FLOAT) ? GL_RGBA16F : GL_RGBA8; break;
+            default:
+                std::cerr << "Unsupported number of channels: " << nrChannels << std::endl;
+                stbi_image_free(data);
+                return;
+        }
+
+        if (target == GL_TEXTURE_1D) {
+            glTexImage1D(target, 0, internalFormat, width, 0, format, dataType, data);
+        } else if (target == GL_TEXTURE_2D) {
+            glTexImage2D(target, 0, internalFormat, width, height, 0, format, dataType, data);
+        } else if (target == GL_TEXTURE_3D) {
+            glTexImage3D(target, 0, internalFormat, width, height, depth, 0, format, dataType, data);
+        }
+
+        glGenerateMipmap(target);
 
         this->width = width;
         this->height = height;
-        this->depth = 0;
-
-        if (data) {
-            GLenum format;
-            if (nrChannels == 1)
-                format = GL_RED;
-            else if (nrChannels == 3)
-                format = GL_RGB; 
-            else if (nrChannels == 4)
-                format = GL_RGBA; 
-            else {
-                //std::cout << "Unsupported number of channels: " << nrChannels << std::endl;
-                stbi_image_free(data);
-                return; 
-            }
-
-            glTexImage2D(this->target, 0, format, width, height, 0, format, dataType, data);
-            glGenerateMipmap(this->target);
-        } else {
-            //std::cout << "Failed to load texture" << std::endl;
-        }
-        stbi_image_free(data);
-    } else if(this->target == GL_TEXTURE_3D) {
-        glTexParameteri(this->target, GL_TEXTURE_WRAP_S, this->mode);
-        glTexParameteri(this->target, GL_TEXTURE_WRAP_T, this->mode);
-        glTexParameteri(this->target, GL_TEXTURE_WRAP_R, this->mode);
-        glTexParameteri(this->target, GL_TEXTURE_MIN_FILTER, this->interpolation);
-        glTexParameteri(this->target, GL_TEXTURE_MAG_FILTER, this->interpolation);
-
-        int width, height, depth, nrChannels;
-        stbi_set_flip_vertically_on_load(isFlip);
-        unsigned char *data = stbi_load(this->texPath.c_str(), &width, &height, &nrChannels, 0);
-
-        if (data) {
-            GLenum format;
-            if (nrChannels == 1)
-                format = GL_RED;
-            else if (nrChannels == 3)
-                format = GL_RGB; 
-            else if (nrChannels == 4)
-                format = GL_RGBA; 
-            else {
-                //std::cout << "Unsupported number of channels: " << nrChannels << std::endl;
-                stbi_image_free(data);
-                return; 
-            }
-
-            depth = 1;
-
-            this->width = width;
-            this->height = height;
-            this->depth = depth;
-
-            glTexImage3D(this->target, 0, format, width, height, depth, 0, format, dataType, data);
-            glGenerateMipmap(this->target);
-        } else {
-            //std::cout << "Failed to load texture" << std::endl;
-        }
-        stbi_image_free(data);
+        this->depth = 1;
+    } else {
+        std::cerr << "Failed to load texture: " << TexPath << std::endl;
     }
-    
+
+    stbi_image_free(data);
     unbindTexture();
 }
 
 void Texture::loadRawTexture(TexType type, TexInternalFormat texInternal, int width, int height, bool isFlip, GLint mode, GLint interpolation) {
     this->type = type;
+    this->width = width;
+    this->height = height;
+    this->depth = depth;
+    this->internal = texInternal;
 
-    // Ordre important ici !
-    this->isFlip = isFlip;
-
-    switch (this->type) {
-        case TEX_1D:
-            this->target = GL_TEXTURE_1D;
-            break;
-        case TEX_2D:
-            this->target = GL_TEXTURE_2D;
-            break;
-        case TEX_3D:
-            this->target = GL_TEXTURE_3D;
-            break;
-        default:
+    switch (type) {
+        case TEX_1D: target = GL_TEXTURE_1D; break;
+        case TEX_2D: target = GL_TEXTURE_2D; break;
+        case TEX_3D: target = GL_TEXTURE_3D; break;
+        case TEX_CUBEMAP: target = GL_TEXTURE_CUBE_MAP; break;
+        default: 
+            std::cerr << "Unsupported texture type for raw loading!" << std::endl; 
             return;
     }
 
-    this->mode = mode;
-    this->interpolation = interpolation;
-
-    if (this->texID == 0) {
-        // Créer un nouvel ID
-        glGenTextures(1, &this->texID);
+    if (texID == 0) {
+        glGenTextures(1, &texID);
     }
 
-    glBindTexture(this->target, this->texID); 
-    // Fin ordre important ici !
+    glBindTexture(target, texID);
 
-    this->width = width;
-    this->height = height;
-    this->internal = texInternal;
-    
-    unsigned char* data = NULL;
-    // Test
-    /*
-    data = new unsigned char[width * height * 4]; // RGBA
-    for (int i = 0; i < width * height * 4; i += 4) {
-        data[i] = 255;     // Rouge
-        data[i + 1] = 0;   // Vert
-        data[i + 2] = 0;   // Bleu
-        data[i + 3] = 255;   // Alpha
-    }*/
+    glTexParameteri(target, GL_TEXTURE_WRAP_S, mode);
+    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, interpolation);
+    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, interpolation);
 
-    GLenum inter;
-    if(this->target == GL_TEXTURE_1D) {
-        GLenum dataType, format;
-
-        glTexParameteri(this->target, GL_TEXTURE_WRAP_S, this->mode);
-        glTexParameteri(this->target, GL_TEXTURE_MIN_FILTER, this->interpolation);
-        glTexParameteri(this->target, GL_TEXTURE_MAG_FILTER, this->interpolation);
-
-        if(texInternal == TEX_R32F || texInternal == TEX_RGB32F || texInternal == TEX_RGBA32F) {
-            dataType = GL_FLOAT;
-
-            if(texInternal == TEX_R32F) {
-                format = GL_RED;
-                inter = GL_R32F;
-            } else if(texInternal == TEX_RGB32F) {
-                format = GL_RGB;
-                inter = GL_RGB32F;
-            } else if(texInternal == TEX_RGBA32F) {
-                format = GL_RGBA;
-                inter = GL_RGBA32F;
-            }
-        }
-
-        if(texInternal == TEX_R32UI || texInternal == TEX_RGB32UI || texInternal == TEX_RGBA32UI) {
-            dataType = GL_UNSIGNED_BYTE;
-
-            if(texInternal == TEX_R32UI) {
-                format = GL_RED;
-                inter = GL_R32UI;
-            } else if(texInternal == TEX_RGB32UI) {
-                format = GL_RGB;
-                inter = GL_RGB32UI;
-            } else if(texInternal == TEX_RGBA32UI) {
-                format = GL_RGBA;
-                inter = GL_RGBA32UI;
-            }
-        }
-
-        this->format = inter;
-
-        glTexImage1D(this->target, 0, inter, width, 0, format, dataType, data);
-        glGenerateMipmap(this->target);
-    } else if(this->target == GL_TEXTURE_2D) {
-        GLenum dataType, format;
-
-        glTexParameteri(this->target, GL_TEXTURE_WRAP_S, this->mode);
-        glTexParameteri(this->target, GL_TEXTURE_WRAP_T, this->mode);
-        glTexParameteri(this->target, GL_TEXTURE_MIN_FILTER, this->interpolation);
-        glTexParameteri(this->target, GL_TEXTURE_MAG_FILTER, this->interpolation);
-
-        if(texInternal == TEX_R32F || texInternal == TEX_RGB32F || texInternal == TEX_RGBA32F) {
-            dataType = GL_FLOAT;
-
-            if(texInternal == TEX_R32F) {
-                format = GL_RED;
-                inter = GL_R32F;
-            } else if(texInternal == TEX_RGB32F) {
-                format = GL_RGB;
-                inter = GL_RGB32F;
-            } else if(texInternal == TEX_RGBA32F) {
-                format = GL_RGBA;
-                inter = GL_RGBA32F;
-            }
-        }
-
-        if(texInternal == TEX_R32UI || texInternal == TEX_RGB32UI || texInternal == TEX_RGBA32UI) {
-            dataType = GL_UNSIGNED_BYTE;
-
-            if(texInternal == TEX_R32UI) {
-                format = GL_RED;
-                inter = GL_R32UI;
-            } else if(texInternal == TEX_RGB32UI) {
-                format = GL_RGB;
-                inter = GL_RGB32UI;
-            } else if(texInternal == TEX_RGBA32UI) {
-                format = GL_RGBA;
-                inter = GL_RGBA32UI;
-            }
-        }
-
-        this->format = inter;
-
-        glTexImage2D(this->target, 0, inter, width, height, 0, format, dataType, data);
-    } else if(this->target == GL_TEXTURE_3D) {
-        GLenum dataType, format;
-
-        glTexParameteri(this->target, GL_TEXTURE_WRAP_S, this->mode);
-        glTexParameteri(this->target, GL_TEXTURE_WRAP_T, this->mode);
-        glTexParameteri(this->target, GL_TEXTURE_WRAP_R, this->mode);     
-        glTexParameteri(this->target, GL_TEXTURE_MIN_FILTER, this->interpolation);
-        glTexParameteri(this->target, GL_TEXTURE_MAG_FILTER, this->interpolation);
-
-        if(texInternal == TEX_R32F || texInternal == TEX_RGB32F || texInternal == TEX_RGBA32F) {
-            dataType = GL_FLOAT;
-
-            if(texInternal == TEX_R32F) {
-                format = GL_RED;
-                inter = GL_R32F;
-            } else if(texInternal == TEX_RGB32F) {
-                format = GL_RGB;
-                inter = GL_RGB32F;
-            } else if(texInternal == TEX_RGBA32F) {
-                format = GL_RGBA;
-                inter = GL_RGBA32F;
-            }
-        }
-
-        if(texInternal == TEX_R32UI || texInternal == TEX_RGB32UI || texInternal == TEX_RGBA32UI) {
-            dataType = GL_UNSIGNED_BYTE;
-
-            if(texInternal == TEX_R32UI) {
-                format = GL_RED;
-                inter = GL_R32UI;
-            } else if(texInternal == TEX_RGB32UI) {
-                format = GL_RGB;
-                inter = GL_RGB32UI;
-            } else if(texInternal == TEX_RGBA32UI) {
-                format = GL_RGBA;
-                inter = GL_RGBA32UI;
-            }
-        }
-
-        this->format = inter;
-
-        int depth = 1;
-        glTexImage3D(this->target, 0, inter, width, height, depth, 0, format, dataType, data);
-        glGenerateMipmap(this->target);
+    if (target == GL_TEXTURE_2D || target == GL_TEXTURE_3D || target == GL_TEXTURE_CUBE_MAP) {
+        glTexParameteri(target, GL_TEXTURE_WRAP_T, mode);
+    }
+    if (target == GL_TEXTURE_3D || target == GL_TEXTURE_CUBE_MAP) {
+        glTexParameteri(target, GL_TEXTURE_WRAP_R, mode);
     }
 
-    delete[] data;
+    GLenum format, dataType;
+
+    switch (texInternal) {
+        case TEX_R16F: format = GL_RED; dataType = GL_FLOAT; break;
+        case TEX_RGB16F: format = GL_RGB; dataType = GL_FLOAT; break;
+        case TEX_RGBA16F: format = GL_RGBA; dataType = GL_FLOAT; break;
+        case TEX_R32F: format = GL_RED; dataType = GL_FLOAT; break;
+        case TEX_RGB32F: format = GL_RGB; dataType = GL_FLOAT; break;
+        case TEX_RGBA32F: format = GL_RGBA; dataType = GL_FLOAT; break;
+        case TEX_R32UI: format = GL_RED; dataType = GL_UNSIGNED_INT; break;
+        case TEX_RGB32UI: format = GL_RGB; dataType = GL_UNSIGNED_INT; break;
+        case TEX_RGBA32UI: format = GL_RGBA; dataType = GL_UNSIGNED_INT; break;
+        default:
+            std::cerr << "Unsupported internal format for raw texture!" << std::endl;
+            return;
+    }
+
+    if (target == GL_TEXTURE_1D) {
+        glTexImage1D(target, 0, texInternal, width, 0, format, dataType, nullptr);
+    } else if (target == GL_TEXTURE_2D) {
+        glTexImage2D(target, 0, texInternal, width, height, 0, format, dataType, nullptr);
+    } else if (target == GL_TEXTURE_3D) {
+        glTexImage3D(target, 0, texInternal, width, height, depth, 0, format, dataType, nullptr);
+    } else if (target == GL_TEXTURE_CUBE_MAP) {
+        for (unsigned int i = 0; i < 6; ++i) {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, texInternal, width, height, 0, format, dataType, nullptr);
+        }
+    }
+
+    glGenerateMipmap(target);
     unbindTexture();
 }
 

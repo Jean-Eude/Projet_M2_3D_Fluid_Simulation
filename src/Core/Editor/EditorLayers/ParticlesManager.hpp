@@ -10,8 +10,6 @@ class ParticlesManager : public LayerEditor {
         ParticlesManager(std::string name)
         : LayerEditor(name) {
             m_renderFunction = [this]() {
-                //auto nbParticules = SharedServices::GetInstance().GetService<int>("nbParticules");
-
                 auto particleRestDensity = SharedServices::GetInstance().GetService<float>("particleRestDensity");
                 auto mass = SharedServices::GetInstance().GetService<float>("mass");
                 auto visco = SharedServices::GetInstance().GetService<float>("viscosity");
@@ -21,14 +19,9 @@ class ParticlesManager : public LayerEditor {
                 auto gravi = SharedServices::GetInstance().GetService<float>("gravity");
                 auto gravityFollowsCamera = SharedServices::GetInstance().GetService<bool>("gravityFollowsCamera");
 
-                auto updateFunc = SharedServices::GetInstance().GetFunction<void, float, std::vector<glm::vec3>&>("updateMesh");
-
-                //std::cout << *resti.get() << std::endl;
-
                 ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
                 ImGui::Begin("Gestionnaire de particules");
 
-                //ImGui::SliderInt("Nombre de particules", nbParticules.get(), 0.0, 15000);
                 ImGui::SliderFloat("Rest Density", particleRestDensity.get(), 0.01f, 5000.f);
                 ImGui::SliderFloat("Masse de la particule", mass.get(), 0.01f, 0.5f);
                 ImGui::SliderFloat("Viscosité", visco.get(), 0.01f, 10.f);
@@ -38,22 +31,6 @@ class ParticlesManager : public LayerEditor {
                 ImGui::SliderFloat("Gravité ", gravi.get(), -50.0f, 50.0f);
 
                 ImGui::Checkbox("Gravité en fonction de la caméra", gravityFollowsCamera.get());
-
-                if (ImGui::Button("Importer un modèle")) {
-                    IGFD::FileDialogConfig config;
-                    config.path = "../Assets/EngineAssets/Models";
-                    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Importer un modèle", ".obj", config);
-                }
-                if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey")) {
-                    if (ImGuiFileDialog::Instance()->IsOk()) { // action if OK
-                        std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-                        std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-                    }
-                    
-                    ImGuiFileDialog::Instance()->Close();
-                }
-
-                //std::cout << *a << std::endl;
 
                 ImGui::End();
                 ImGui::PopStyleVar();

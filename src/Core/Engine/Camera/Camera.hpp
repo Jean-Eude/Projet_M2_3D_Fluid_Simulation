@@ -20,7 +20,7 @@ class Camera{
         Quaternion currentQuaternion;
         Quaternion lastQuaternion = {0.0f, glm::vec3(1.0f, 0.0f, 0.0f)};
         
-        float radius = 1.0f;
+        float radius = 0.5f;
         float cosValue, cosValue_2;
         float theta;
         float angle = 180.0f;
@@ -32,9 +32,8 @@ class Camera{
         float dotProduct();
         void rotation();
         void replace();
+        glm::mat4 getViewMatrix();
 
         void setFlag(bool newFlag);
         bool getFlag();
-
-        
 };

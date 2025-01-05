@@ -13,19 +13,19 @@ public:
 
     // Enregistrer un modèle
     template <typename T, typename... Args>
-static bool registerModel(const std::string& modelName) {
-    auto& manager = getInstance();
+    static bool registerModel(const std::string& modelName) {
+        auto& manager = getInstance();
 
-    using FunctionType = std::function<std::unique_ptr<Models>(std::tuple<Args...>)>;
+        using FunctionType = std::function<std::unique_ptr<Models>(std::tuple<Args...>)>;
 
-    manager.ModelLists[modelName] = FunctionType([](std::tuple<Args...> params) -> std::unique_ptr<Models> {
-        return std::apply([](Args... unpackedArgs) {
-            return std::make_unique<T>(std::forward<Args>(unpackedArgs)...);
-        }, params);
-    });
+        manager.ModelLists[modelName] = FunctionType([](std::tuple<Args...> params) -> std::unique_ptr<Models> {
+            return std::apply([](Args... unpackedArgs) {
+                return std::make_unique<T>(std::forward<Args>(unpackedArgs)...);
+            }, params);
+        });
 
-    return true;
-}
+        return true;
+    }
 
     template <typename... Args>
     std::unique_ptr<Models> createModel(const std::string& modelName, Args&&... args) {
