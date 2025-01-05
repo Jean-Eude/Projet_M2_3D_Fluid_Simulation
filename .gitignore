@@ -1,2 +1,7 @@
+bin/*
+
+# Excepté le CMakeLists.txt
+!bin/CMakeLists.txt
+
 Assets/EngineAssets/Models/*.obj
 Assets/EngineAssets/Models/*.stl
