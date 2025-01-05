@@ -97,7 +97,7 @@ void EngineManager::OnInitWindowEngine() {
 
 
     // Paramètres
-    float size = 1.5f;
+    float size = 0.35f;
 
     // Plan
     shaders.enqueueShader("Base", FilePath::getFilePath("/Assets/EngineAssets/Shaders/PlaneVert.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/PlaneFrag.glsl"));
