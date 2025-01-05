@@ -12,6 +12,8 @@ int Window::m_height;
 bool Window::m_vsync;
 
 
+glm::vec3 lightPositions = glm::vec3(0.0f, 0.0f, 0.0f);
+
 std::unique_ptr<Models> plane;
 std::unique_ptr<Models> box;
 
@@ -25,6 +27,10 @@ int pboxSize = 15;
 int nbParticules = pboxSize * pboxSize * pboxSize;
 std::vector<Particule> particles(nbParticules);
 unsigned int VBO3, VAO3, EBO3;
+
+
+float nearPlane = 0.1f;
+float farPlane = 1000.f;
 
 static std::shared_ptr<GPUBuffersManager> gpuBuffersManager;
 
@@ -118,6 +124,7 @@ void EngineManager::OnInitWindowEngine() {
     std::cout << box->getBBmax().x << box->getBBmax().y << box->getBBmax().z << std::endl;
 
     // Particules
+    SharedServices::GetInstance().RegisterService("ScreenSize", std::make_shared<glm::vec2>(glm::vec2(1280, 720)));
     SharedServices::GetInstance().RegisterService("BBmin", std::make_shared<glm::vec3>(box->getBBmin()));
     SharedServices::GetInstance().RegisterService("BBmax", std::make_shared<glm::vec3>(box->getBBmax()));
 
@@ -151,38 +158,37 @@ void EngineManager::OnInitWindowEngine() {
     bool gravityFollowCamera = false;
     SharedServices::GetInstance().RegisterService("gravityFollowsCamera", std::make_shared<bool>(gravityFollowCamera));
 
+    // -------------------------------------------------------- //
 
-    shaders.enqueueShader("Particule", FilePath::getFilePath("/Assets/EngineAssets/Shaders/ParticuleVert.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/ParticuleFrag.glsl"));
+    shaders.enqueueShader("Particule", FilePath::getFilePath("/Assets/EngineAssets/Shaders/ParticuleVert.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/SSR.glsl"));
     shaders.enqueueComputeShader("particleDensityCS", FilePath::getFilePath("/Assets/EngineAssets/Shaders/particleDensity.cs"));
     shaders.setNumGroupsComputeShaderByName("particleDensityCS", numGroupsX, numGroupsY, numGroupsZ, nbParticules, 1, 1);
-
     shaders.useComputeShaderByName("particleDensityCS");
     shaders.setCompBind1i("particleDensityCS", "particleCount", nbParticules);
     shaders.setCompBind1f("particleDensityCS", "particleMass", *SharedServices::GetInstance().GetService<float>("mass"));
     shaders.setCompBind1f("particleDensityCS", "smoothingLength", *SharedServices::GetInstance().GetService<float>("SmoothingLength"));
-
     shaders.setCompBind3f("particleDensityCS", "minAABB", *SharedServices::GetInstance().GetService<glm::vec3>("BBmin"));
     shaders.setCompBind3f("particleDensityCS", "maxAABB", *SharedServices::GetInstance().GetService<glm::vec3>("BBmax"));
     shaders.setCompBind1u("particleDensityCS", "gridSize", gridSize);
 
     shaders.enqueueComputeShader("particlePhysicsCS", FilePath::getFilePath("/Assets/EngineAssets/Shaders/particlePhysics.cs"));
     shaders.setNumGroupsComputeShaderByName("particlePhysicsCS", numGroupsX, numGroupsY, numGroupsZ, nbParticules, 1, 1);
-
     shaders.useComputeShaderByName("particlePhysicsCS");
     shaders.setCompBind1i("particlePhysicsCS", "particleCount", nbParticules);
-
     shaders.setCompBind3f("particlePhysicsCS", "minAABB", *SharedServices::GetInstance().GetService<glm::vec3>("BBmin"));
     shaders.setCompBind3f("particlePhysicsCS", "maxAABB", *SharedServices::GetInstance().GetService<glm::vec3>("BBmax"));
     shaders.setCompBind1u("particlePhysicsCS", "gridSize", gridSize);
 
     shaders.enqueueComputeShader("particleIntegrationCS", FilePath::getFilePath("/Assets/EngineAssets/Shaders/particleIntegration.cs"));
     shaders.setNumGroupsComputeShaderByName("particleIntegrationCS", numGroupsX, numGroupsY, numGroupsZ, nbParticules, 1, 1);
-
     shaders.useComputeShaderByName("particleIntegrationCS");
 
     shaders.useShaderByName("Particule");    
     shaders.setBind3f("Particule", "minAABB", *SharedServices::GetInstance().GetService<glm::vec3>("BBmin"));
     shaders.setBind3f("Particule", "maxAABB", *SharedServices::GetInstance().GetService<glm::vec3>("BBmax"));
+    shaders.setBind1f("Particule", "nearPlane", nearPlane);
+    shaders.setBind1f("Particule", "farPlane", farPlane);
+    shaders.setBind2f("Particule", "ScreenSize", *SharedServices::GetInstance().GetService<glm::vec2>("ScreenSize"));
 
     for (std::size_t i = 0; i < pboxSize; ++i) {
         for (std::size_t j = 0; j < pboxSize; ++j) {
@@ -211,8 +217,6 @@ void EngineManager::OnInitWindowEngine() {
     glGenBuffers(1, &VBO3);
     glBindBuffer(GL_ARRAY_BUFFER, VBO3);
     glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * nbParticules, nullptr, GL_DYNAMIC_DRAW);
-
-    std::cout << sizeof(glm::vec3) * nbParticules << std::endl;
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
     glEnableVertexAttribArray(0);
@@ -284,7 +288,7 @@ void EngineManager::OnUpdateWindowEngine() {
     LinkedSpatialHashGrid::buildParticlesInteraction(*this, particles, *SharedServices::GetInstance().GetService<glm::vec3>("BBmin"), *SharedServices::GetInstance().GetService<glm::vec3>("BBmax"), gridSize);
 
     glm::mat4 model = glm::mat4(1.0f);
-    glm::mat4 projection = glm::perspective(glm::radians(90.0f), static_cast<float>(gpuBuffersManager->getFBODimensionsByName("fbom").first) / gpuBuffersManager->getFBODimensionsByName("fbom").second, 0.1f, 100000.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(90.0f), static_cast<float>(gpuBuffersManager->getFBODimensionsByName("fbom").first) / gpuBuffersManager->getFBODimensionsByName("fbom").second, nearPlane, farPlane);
     glm::mat4 view = glm::mat4(1.0f);
     view = glm::translate(view, camera.position); 
     view = glm::rotate(view, glm::radians(camera.angle), camera.rotationalAxis);
@@ -360,6 +364,8 @@ void EngineManager::OnUpdateWindowEngine() {
         shaders.setBind4fv("Particule", "mvp", 1, GL_FALSE, glm::value_ptr(mvp));
         shaders.setBind1f("Particule", "tailleParticule", *SharedServices::GetInstance().GetService<float>("sizeParti"));
         shaders.setBind3f("Particule", "camPos", camera.position);
+        shaders.setBind2f("Particule", "ScreenSize", *SharedServices::GetInstance().GetService<glm::vec2>("ScreenSize"));
+
         glPointSize(10.);
         glBindVertexArray(VAO3);
         glEnable(GL_POINT_SMOOTH);

@@ -6,7 +6,6 @@ out vec4 couleur;
 out float density;
 out vec3 velocity;
 out vec3 force;
-
 out vec3 position;
 
 struct Particule {
@@ -29,12 +28,9 @@ layout(std430, binding = 0) buffer ParticuleBuffer {
 };
 
 uniform mat4 mvp;
-
 uniform vec3 minAABB;
 uniform vec3 maxAABB;
-
 uniform vec3 camPos;
-
 uniform float tailleParticule;
 
 

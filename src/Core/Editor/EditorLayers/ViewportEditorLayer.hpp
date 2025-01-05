@@ -13,9 +13,13 @@ class ViewportEditorLayer : public LayerEditor, public GPUBuffersManager {
             m_renderFunction = [this]() {
                 ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
                 ImGui::Begin(ICON_FA_IMAGE "  Viewport");
-     
+
+                auto screensize = SharedServices::GetInstance().GetService<bool>("ScreenSize");
+
                 float window_width = ImGui::GetContentRegionAvail().x;
                 float window_height = ImGui::GetContentRegionAvail().y;
+
+                SharedServices::GetInstance().SetService<glm::vec2>("ScreenSize", glm::vec2(window_width, window_height));
 
                 getGPUBuffersManager()->rescaleFBO("fbom", window_width, window_height);
 

@@ -1,11 +1,6 @@
 #pragma once
 
-#include <unordered_map>
-#include <memory>
-#include <string>
-#include <typeindex>
-#include <stdexcept>
-#include <functional>
+#include <HeadersBase.hpp>
 
 class SharedServices {
 public:
@@ -30,6 +25,17 @@ public:
             return std::static_pointer_cast<T>(it->second);
         }
         throw std::runtime_error("Service not registered with this key: " + key);
+    }
+
+    template<typename T>
+    void SetService(const std::string& key, const T& value) {
+        auto it = namedServices.find(key);
+        if (it != namedServices.end()) {
+            auto existingService = std::static_pointer_cast<T>(it->second);
+            *existingService = value;
+        } else {
+            throw std::runtime_error("Service not found to update: " + key);
+        }
     }
 
     template<typename Ret, typename... Args>
