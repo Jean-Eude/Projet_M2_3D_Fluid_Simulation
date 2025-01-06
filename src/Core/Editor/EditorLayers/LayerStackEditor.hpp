@@ -28,7 +28,6 @@ class LayerStackEditor : public LogsManager {
         std::stack<LayerEditor*> m_Layers;
         std::stack<LayerEditor*> m_Overlays;
 
-        // Editor Layers Events
         EventHandler<LayerEditorPushed> m_layerEditorPushed = [this](const LayerEditorPushed& e) {
             OnLayerEditorPushed(e);
         };

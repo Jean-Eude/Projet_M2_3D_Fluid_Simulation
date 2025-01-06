@@ -49,13 +49,11 @@ void FBO::createFBO(int width, int height, FBOType type) {
             glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texid, 0);
 
-            // Pas de couleur pour un shadow map FBO
             glDrawBuffer(GL_NONE);
             glReadBuffer(GL_NONE);
             break;
     }
 
-    // Configuration du renderbuffer pour la profondeur et le stencil, sauf pour les shadow maps
     if (type != FBOType::SHADOW_MAP) {
         glGenRenderbuffers(1, &m_rbo);
         bindRBO();
@@ -133,7 +131,7 @@ void FBO::unbindFBO() {
 }
 
 void FBO::bindRBO() {
-    glBindRenderbuffer(GL_FRAMEBUFFER, m_fbo);
+    glBindRenderbuffer(GL_FRAMEBUFFER, m_rbo);
 }
 
 void FBO::unbindRBO() {

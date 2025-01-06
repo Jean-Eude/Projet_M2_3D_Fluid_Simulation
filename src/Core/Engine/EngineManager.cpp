@@ -31,6 +31,8 @@ unsigned int VBO3, VAO3, EBO3;
 
 float nearPlane = 0.1f;
 float farPlane = 1000.f;
+float minDepth = nearPlane;
+float maxDepth = 0.0f;
 
 static std::shared_ptr<GPUBuffersManager> gpuBuffersManager;
 
@@ -127,6 +129,12 @@ void EngineManager::OnInitWindowEngine() {
     SharedServices::GetInstance().RegisterService("ScreenSize", std::make_shared<glm::vec2>(glm::vec2(1280, 720)));
     SharedServices::GetInstance().RegisterService("BBmin", std::make_shared<glm::vec3>(box->getBBmin()));
     SharedServices::GetInstance().RegisterService("BBmax", std::make_shared<glm::vec3>(box->getBBmax()));
+    glm::vec3 colorParti = glm::vec3(1., 1., 1.);
+    SharedServices::GetInstance().RegisterService("CouleurParticule", std::make_shared<glm::vec3>(colorParti));
+    float coeffAbsorption = 0.5;
+    SharedServices::GetInstance().RegisterService("CoeffAbso", std::make_shared<float>(coeffAbsorption));
+    float sigma = 0.1;
+    SharedServices::GetInstance().RegisterService("Sigma", std::make_shared<float>(sigma));
 
     // Calcul de smoothLength
     float Volume = size * size * size;
@@ -189,6 +197,8 @@ void EngineManager::OnInitWindowEngine() {
     shaders.setBind1f("Particule", "nearPlane", nearPlane);
     shaders.setBind1f("Particule", "farPlane", farPlane);
     shaders.setBind2f("Particule", "ScreenSize", *SharedServices::GetInstance().GetService<glm::vec2>("ScreenSize"));
+    shaders.setBind1f("Particule", "smoothingLength", *SharedServices::GetInstance().GetService<float>("SmoothingLength"));
+    shaders.setBind3f("Particule", "baseColor", *SharedServices::GetInstance().GetService<glm::vec3>("CouleurParticule"));
 
     for (std::size_t i = 0; i < pboxSize; ++i) {
         for (std::size_t j = 0; j < pboxSize; ++j) {
@@ -360,17 +370,41 @@ void EngineManager::OnUpdateWindowEngine() {
         box->Update();
 
         // Particules
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_ONE, GL_ONE);
+
         shaders.useShaderByName("Particule");
         shaders.setBind4fv("Particule", "mvp", 1, GL_FALSE, glm::value_ptr(mvp));
+        shaders.setBind4fv("Particule", "view", 1, GL_FALSE, glm::value_ptr(view));
+        shaders.setBind4fv("Particule", "projection", 1, GL_FALSE, glm::value_ptr(projection));
         shaders.setBind1f("Particule", "tailleParticule", *SharedServices::GetInstance().GetService<float>("sizeParti"));
         shaders.setBind3f("Particule", "camPos", camera.position);
         shaders.setBind2f("Particule", "ScreenSize", *SharedServices::GetInstance().GetService<glm::vec2>("ScreenSize"));
+        shaders.setBind1f("Particule", "smoothingLength", *SharedServices::GetInstance().GetService<float>("SmoothingLength"));
+        shaders.setBind1f("Particule", "nearPlane", nearPlane);
+        shaders.setBind1f("Particule", "farPlane", farPlane);
+        shaders.setBind3f("Particule", "baseColor", *SharedServices::GetInstance().GetService<glm::vec3>("CouleurParticule"));
+        shaders.setBind1f("Particule", "absorptionCoefficient", *SharedServices::GetInstance().GetService<float>("CoeffAbso"));
+        shaders.setBind1f("Particule", "sigma", *SharedServices::GetInstance().GetService<float>("Sigma"));
+
+        for (const auto& particle : particles) {
+            glm::vec4 viewPos = view * glm::vec4(particle.pos, 1.0f);
+            float depth = -viewPos.z;
+
+            minDepth = std::min(minDepth, depth);
+            maxDepth = std::max(maxDepth, depth);
+        }
+
+        shaders.setBind1f("Particule", "minDepth", minDepth);
+        shaders.setBind1f("Particule", "maxDepth", maxDepth);
 
         glPointSize(10.);
         glBindVertexArray(VAO3);
         glEnable(GL_POINT_SMOOTH);
         glDrawArrays(GL_POINTS, 0, nbParticules);
         glBindVertexArray(0);
+        glDisable(GL_BLEND);
 
     SharedServices::GetInstance().GetService<GPUBuffersManager>("fbo")->unbindFBO("fbom");
 
