@@ -8,6 +8,8 @@ out vec3 velocity;
 out vec3 force;
 out vec3 position;
 
+out float radius;
+
 struct Particule {
     vec3 pos;
     float _pad1; 
@@ -38,7 +40,8 @@ void main() {
     position = particles[gl_VertexID].pos; // Lecture depuis le SSBO
     gl_Position = mvp * vec4(position, 1.0);
     float distanceCam = length(gl_Position.xyz - camPos);
-    gl_PointSize = tailleParticule / distanceCam;
+    radius = tailleParticule / distanceCam;
+    gl_PointSize = radius;
 
     // Normalisation de la position pour la couleur (dans l'intervalle [0, 1])
     vec3 normalizedPos = (position - minAABB) / (maxAABB - minAABB);

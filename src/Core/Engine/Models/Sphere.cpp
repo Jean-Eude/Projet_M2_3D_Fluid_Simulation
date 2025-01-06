@@ -8,7 +8,6 @@ void Sphere::InitVerticesAndIndices() {
     vertices.clear();
     indices.clear();
 
-    // Génération des sommets
     for (unsigned int y = 0; y <= this->gridSize; ++y) {
         for (unsigned int x = 0; x <= this->gridSize; ++x) {
             // Calcul des segments UV
@@ -37,7 +36,6 @@ void Sphere::InitVerticesAndIndices() {
         }
     }
 
-    // Génération des indices pour les triangles
     for (unsigned int y = 0; y < this->gridSize; ++y) {
         for (unsigned int x = 0; x <= this->gridSize; ++x) {
             // Indices des sommets
