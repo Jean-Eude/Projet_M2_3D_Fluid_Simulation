@@ -5,3 +5,4 @@ bin/*
 
 Assets/EngineAssets/Models/*.obj
 Assets/EngineAssets/Models/*.stl
+Assets/EngineAssets/Models/*.mtl
