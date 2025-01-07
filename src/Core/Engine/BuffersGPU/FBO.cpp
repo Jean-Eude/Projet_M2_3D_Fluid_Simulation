@@ -131,7 +131,7 @@ void FBO::unbindFBO() {
 }
 
 void FBO::bindRBO() {
-    glBindRenderbuffer(GL_FRAMEBUFFER, m_rbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
 }
 
 void FBO::unbindRBO() {

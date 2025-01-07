@@ -165,6 +165,7 @@ void GPUBuffersManager::bindFBO(const std::string& name) {
     auto it = fboQueue.find(name);
     if (it != fboQueue.end()) {
         it->second.bindFBO();
+        it->second.bindRBO();
     } else {
         std::cerr << "FBO named '" << name << "' not found." << std::endl;
     }
@@ -174,6 +175,7 @@ void GPUBuffersManager::unbindFBO(const std::string& name) {
     auto it = fboQueue.find(name);
     if (it != fboQueue.end()) {
         it->second.unbindFBO();
+        it->second.unbindRBO();
     } else {
         std::cerr << "FBO named '" << name << "' not found." << std::endl;
     }

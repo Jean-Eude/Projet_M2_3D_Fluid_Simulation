@@ -22,30 +22,32 @@ layout(std430, binding = 0) buffer ParticuleBuffer {
     Particule particles[];
 };
 
-/*layout(std430, binding = 3) buffer VertexBuffer {
+layout(std430, binding = 3) buffer VertexBuffer {
     float vertices[];
 };
 
 layout(std430, binding = 4) buffer ElementBuffer {
     uint triangles[];
-};*/
+};
 
 uniform float deltaTime;
 uniform vec3 minAABB;
 uniform vec3 maxAABB;
 
-//uniform uint triangleCount;
-
 uniform float restitution;
 
+uniform uint triangleCount;
+
 bool intersection(vec3 start, vec3 direction, vec3 v0, vec3 v1, vec3 v2, out float t) {
+    const float EPSILON = 1e-6;
+
     vec3 edge1 = v1 - v0;
     vec3 edge2 = v2 - v0;
 
     vec3 h = cross(direction, edge2);
     float a = dot(edge1, h);
 
-    if (abs(a) < 1e-6) {
+    if (abs(a) < EPSILON) {
         return false;
     }
 
@@ -54,49 +56,26 @@ bool intersection(vec3 start, vec3 direction, vec3 v0, vec3 v1, vec3 v2, out flo
     vec3 s = start - v0;
 
     float u = f * dot(s, h);
-    if (u < 0.0 || u > 1.0) {
+    if (u < -EPSILON || u > 1.0 + EPSILON) {
         return false;
     }
 
     vec3 q = cross(s, edge1);
     float v = f * dot(direction, q);
-    if (v < 0.0 || u + v > 1.0) {
+    if (v < -EPSILON || u + v > 1.0 + EPSILON) {
         return false;
     }
 
     t = f * dot(edge2, q);
-    if (t < 0.0) {
+    if (t < -EPSILON) {
         return false;
     }
 
     return true;
 }
 
-/*void resolveIntersection(vec3 start, vec3 end) {
-    uint id = gl_GlobalInvocationID.x;
-    vec3 direction = end - start;
-
-    float t = 2.0;
-    vec3 newDirection;
-
-    for (uint i = 0; i < triangleCount; ++i) {
-        float nt;
-        vec3 v1 = vertices[triangles[3 * i]];
-        vec3 v2 = vertices[triangles[3 * i + 1]];
-        vec3 v3 = vertices[triangles[3 * i + 2]];
-        if (intersection(start, direction, v1, v2, v3, nt) && nt < t) {
-            t = nt;
-            newDirection = reflect(direction, normalize(cross(v3 - v1, v2 - v1)));
-        }
-    }
-
-    if (t > 0 && t < 1) {
-        particles[id].pos = start + t * direction;
-        particles[id].velocity = restitution * newDirection;
-    }
-}*/
-
 void main() {
+    const float EPSILON = 1e-6;
     uint id = gl_GlobalInvocationID.x;
 
     // Vérifie si l'ID dépasse le nombre de particules (comme en CUDA)
@@ -106,8 +85,41 @@ void main() {
 
     vec3 oldPos = p.pos;
     p.velocity += p.force * deltaTime;
-    p.pos += p.velocity * deltaTime;
+    vec3 direction = p.velocity * deltaTime;
     
+    if (length(direction) > EPSILON) {
+        vec3 newPos = oldPos + direction;
+
+        float t = 2.0;
+        vec3 normal;
+
+        for (uint i = 0; i < triangleCount; ++i) {
+            float nt;
+            uint t1 = triangles[3 * i];
+            uint t2 = triangles[3 * i + 1];
+            uint t3 = triangles[3 * i + 2];
+
+            vec3 v1 = vec3(vertices[3 * t1], vertices[3 * t1 + 1], vertices[3 * t1 + 2]);
+            vec3 v2 = vec3(vertices[3 * t2], vertices[3 * t2 + 1], vertices[3 * t2 + 2]);
+            vec3 v3 = vec3(vertices[3 * t3], vertices[3 * t3 + 1], vertices[3 * t3 + 2]);
+            vec3 n = cross(v2 - v1, v3 - v1);
+
+            if (dot(direction, n) <= 0.0 && intersection(oldPos, direction, v1, v2, v3, nt) && nt < t) {
+                t = nt;
+                normal = normalize(n);
+            }
+        }
+
+        if (t <= 1.0) {
+            //newPos = oldPos + t * direction + max(1e-5, 0.01 * length(direction)) * normal;
+
+            newPos = oldPos + t * direction + 1e-5 * normal;
+            p.velocity = /*restitution*/ 0.8 * reflect(p.velocity, normal);
+        }
+
+        p.pos = newPos;
+    }
+
     for (int i = 0; i < 3; i++) {
         if (p.pos[i] < minAABB[i]) {
             p.pos[i] = 2.0 * minAABB[i] - p.pos[i];

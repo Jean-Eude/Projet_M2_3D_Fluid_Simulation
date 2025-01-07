@@ -16,12 +16,14 @@ glm::vec3 lightPositions = glm::vec3(0.0f, 0.0f, 0.0f);
 
 std::unique_ptr<Models> plane;
 std::unique_ptr<Models> box;
+std::unique_ptr<Models> mesh;
 
 int numGroupsX = 256;
 int numGroupsY = 1;
 int numGroupsZ = 1;
 
 unsigned gridSize = 32;
+float meshScale = 0.15f;
 
 int pboxSize = 15;
 int nbParticules = pboxSize * pboxSize * pboxSize;
@@ -105,7 +107,7 @@ void EngineManager::OnInitWindowEngine() {
 
 
     // Paramètres
-    float size = 0.35f;
+    float size = 0.45f;
 
     // Plan
     shaders.enqueueShader("Base", FilePath::getFilePath("/Assets/EngineAssets/Shaders/PlaneVert.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/PlaneFrag.glsl"));
@@ -135,6 +137,13 @@ void EngineManager::OnInitWindowEngine() {
     SharedServices::GetInstance().RegisterService("CoeffAbso", std::make_shared<float>(coeffAbsorption));
     float sigma = 0.1;
     SharedServices::GetInstance().RegisterService("Sigma", std::make_shared<float>(sigma));
+
+    // Mesh
+    shaders.enqueueShader("Mesh", FilePath::getFilePath("/Assets/EngineAssets/Shaders/SimpleShadingVert.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/SimpleShadingFrag.glsl"));
+    mesh = ModelManager::getInstance().createModel("Mesh", FilePath::getFilePath("/Assets/EngineAssets/Models/suzanne.obj"));
+    mesh->Init();
+    shaders.useShaderByName("Mesh");
+    shaders.setBind1i("Mesh", "tex0", textures.getTextureUnit("terrain"));
 
     // Calcul de smoothLength
     float Volume = size * size * size;
@@ -237,6 +246,16 @@ void EngineManager::OnInitWindowEngine() {
     ssboM.enqueueSSBO("particulesSSBO", GL_DYNAMIC_DRAW, particles);
     LinkedSpatialHashGrid::initShaders(*this, particles, *SharedServices::GetInstance().GetService<glm::vec3>("BBmin"), *SharedServices::GetInstance().GetService<glm::vec3>("BBmax"), gridSize, numGroupsX, numGroupsY, numGroupsZ);
 
+    std::vector<float> scaledVertices(3 * mesh->getNbVerts() / 8);
+    for (std::size_t i = 0; i < mesh->getNbVerts() / 8; ++i) {
+        scaledVertices[3 * i] = meshScale * mesh->getVertices()[8 * i];
+        scaledVertices[3 * i + 1] = meshScale * mesh->getVertices()[8 * i + 1];
+        scaledVertices[3 * i + 2] = meshScale * mesh->getVertices()[8 * i + 2];
+    }
+
+    ssboM.enqueueSSBO("vertexSSBO", GL_STATIC_DRAW, scaledVertices);
+    ssboM.enqueueSSBO("elementSSBO", GL_STATIC_DRAW, mesh->getIndices());
+
     // ---------------------------------------------------------------------------- // 
     auto fbom = SharedServices::GetInstance().GetService<GPUBuffersManager>("fbo");
 
@@ -296,6 +315,8 @@ void EngineManager::OnUpdateWindowEngine() {
 
     ssboM.bindBufferBaseByName("particulesSSBO");
     LinkedSpatialHashGrid::buildParticlesInteraction(*this, particles, *SharedServices::GetInstance().GetService<glm::vec3>("BBmin"), *SharedServices::GetInstance().GetService<glm::vec3>("BBmax"), gridSize);
+    ssboM.bindBufferBaseByName("vertexSSBO");
+    ssboM.bindBufferBaseByName("elementSSBO");
 
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 projection = glm::perspective(glm::radians(90.0f), static_cast<float>(gpuBuffersManager->getFBODimensionsByName("fbom").first) / gpuBuffersManager->getFBODimensionsByName("fbom").second, nearPlane, farPlane);
@@ -303,6 +324,9 @@ void EngineManager::OnUpdateWindowEngine() {
     view = glm::translate(view, camera.position); 
     view = glm::rotate(view, glm::radians(camera.angle), camera.rotationalAxis);
     glm::mat4 mvp = projection * view * model;
+
+    glm::mat4 meshModel = glm::scale(glm::mat4(1.0f), glm::vec3(meshScale));
+    glm::mat4 meshMvp = projection * view * meshModel;
 
     m_TimersList.at(0).Update();
     while(m_TimersList.at(0).getAcc() >= m_TimersList.at(0).getMSPerUpdate()) {
@@ -344,6 +368,8 @@ void EngineManager::OnUpdateWindowEngine() {
         shaders.setCompBind1f("particleIntegrationCS", "speed", 200.0f);           
         shaders.setCompBind1f("particleIntegrationCS", "dispersion", 0.1f);     
         shaders.setCompBind1f("particleIntegrationCS", "restitution", *SharedServices::GetInstance().GetService<float>("restitution"));
+        shaders.setCompBind1u("particleIntegrationCS", "triangleCount", mesh->getNbIndices() / 3);
+
 
         shaders.memoryBarrierByName("particleIntegrationCS", CS_SSBO);
         m_TimersList.at(0).UpdateDeltaTime();
@@ -368,6 +394,12 @@ void EngineManager::OnUpdateWindowEngine() {
         shaders.useShaderByName("Box");
         shaders.setBind4fv("Box", "mvp", 1, GL_FALSE, glm::value_ptr(mvp));
         box->Update();
+
+        // Mesh
+        shaders.useShaderByName("Mesh");
+        shaders.setBind4fv("Mesh", "model", 1, GL_FALSE, glm::value_ptr(meshModel));
+        shaders.setBind4fv("Mesh", "mvp", 1, GL_FALSE, glm::value_ptr(meshMvp));
+        mesh->Update();
 
         // Particules
 
@@ -417,6 +449,7 @@ void EngineManager::OnDestroyWindowEngine() {
 
     plane->Clear();
     box->Clear();
+    mesh->Clear();
 
     m_editor.OnDestroyUI();
         
