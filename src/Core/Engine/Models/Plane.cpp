@@ -36,7 +36,6 @@ void Plane::InitVerticesAndIndices() {
         }
     }
 
-    // Génération des indices
     for (int z = 0; z < div; ++z) {
         for (int x = 0; x < div; ++x) {
             int topLeft = z * (div + 1) + x;

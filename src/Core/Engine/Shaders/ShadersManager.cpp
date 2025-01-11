@@ -57,6 +57,16 @@ void ShadersManager::useShaderByName(const std::string& name) {
     }
 }
 
+void ShadersManager::replaceShader(const std::string& name, const std::string& vertex, const std::string& fragment) {
+    for (auto& shader : shaderQueue) {
+        if (shader->getName() == name) {
+            shader->loadShader(vertex, fragment);
+            break;
+        }
+    }
+}
+
+
 void ShadersManager::enqueueComputeShader(const std::string& name, const std::string& compute) {
     auto shader = std::make_shared<ComputeShader>();
     shader->loadComputeShader(compute);

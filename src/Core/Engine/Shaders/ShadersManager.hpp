@@ -30,6 +30,7 @@ class ShadersManager : public ThreadManager {
         void hotReloadShaderByName(const std::string& name);
         void hotReloadAllShaders();
         void useShaderByName(const std::string& name);
+        void replaceShader(const std::string& name, const std::string& vertex, const std::string& fragment);
 
         // Shaders C
         void enqueueComputeShader(const std::string& name, const std::string& compute);

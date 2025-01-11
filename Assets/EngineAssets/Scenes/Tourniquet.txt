@@ -22,13 +22,16 @@ int numGroupsX = 256;
 int numGroupsY = 1;
 int numGroupsZ = 1;
 
+// Paramètres
+float size = 0.45f;
 unsigned gridSize = 32;
-float meshScale = 0.1f;
-
-int pboxSize = 15;
+float meshScale = 0.18f;
+int pboxSize = 10;
 int nbParticules = pboxSize * pboxSize * pboxSize;
 std::vector<Particule> particles(nbParticules);
 unsigned int VBO3, VAO3, EBO3;
+
+float rotaSpeed = 45.0f;
 
 
 float nearPlane = 0.1f;
@@ -104,9 +107,6 @@ void EngineManager::OnInitWindowEngine() {
     
     addTimer("Global Timer");
     m_TimersList.at(0).Start();
-
-    // Paramètres
-    float size = 0.45f;
 
     // Plan
     shaders.enqueueShader("Base", FilePath::getFilePath("/Assets/EngineAssets/Shaders/PlaneVert.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/PlaneFrag.glsl"));
@@ -331,9 +331,6 @@ void EngineManager::OnUpdateWindowEngine() {
     view = glm::rotate(view, glm::radians(camera.angle), camera.rotationalAxis);
     glm::mat4 mvp = projection * view * model;
 
-    glm::mat4 meshModel = glm::scale(glm::mat4(1.0f), glm::vec3(meshScale));
-    glm::mat4 meshMvp = projection * view * meshModel;
-
     m_TimersList.at(0).Update();
     while(m_TimersList.at(0).getAcc() >= m_TimersList.at(0).getMSPerUpdate()) {
         float deltaTime = static_cast<float>(m_TimersList.at(0).getDeltaTime());
@@ -379,6 +376,15 @@ void EngineManager::OnUpdateWindowEngine() {
         shaders.memoryBarrierByName("particleIntegrationCS", CS_SSBO);
         m_TimersList.at(0).UpdateDeltaTime();
     }
+
+    static float AccAngle = 0.0f;
+    AccAngle += *SharedServices::GetInstance().GetService<float>("RotationSpeed") * static_cast<float>(m_TimersList.at(0).getMSPerUpdate());
+
+    glm::mat4 meshModel = glm::mat4(1.f);
+    meshModel = glm::scale(meshModel, glm::vec3(meshScale));
+    meshModel = glm::translate(meshModel, glm::vec3(0.0f, static_cast<float>(size) / 2.f, 0.0f));
+    meshModel = glm::rotate(meshModel, glm::radians(AccAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::mat4 meshMvp = projection * view * meshModel;
 
     // Others
     m_editor.OnUpdateUI();
