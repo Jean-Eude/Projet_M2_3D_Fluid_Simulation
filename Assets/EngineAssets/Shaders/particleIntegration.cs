@@ -38,6 +38,8 @@ uniform float restitution;
 
 uniform uint triangleCount;
 
+uniform bool hasMeshCollision;
+
 bool intersection(vec3 start, vec3 direction, vec3 v0, vec3 v1, vec3 v2, out float t) {
     const float EPSILON = 1e-6;
 
@@ -87,37 +89,56 @@ void main() {
     p.velocity += p.force * deltaTime;
     vec3 direction = p.velocity * deltaTime;
     
-    if (length(direction) > EPSILON) {
-        vec3 newPos = oldPos + direction;
+    if (hasMeshCollision) {
+        if (length(direction) > EPSILON) {
+            for (uint i = 0; i < triangleCount; ++i) {
+                float nt;
+                uint t1 = triangles[3 * i];
+                uint t2 = triangles[3 * i + 1];
+                uint t3 = triangles[3 * i + 2];
 
-        float t = 2.0;
-        vec3 normal;
+                vec3 v1 = vec3(vertices[3 * t1], vertices[3 * t1 + 1], vertices[3 * t1 + 2]);
+                vec3 v2 = vec3(vertices[3 * t2], vertices[3 * t2 + 1], vertices[3 * t2 + 2]);
+                vec3 v3 = vec3(vertices[3 * t3], vertices[3 * t3 + 1], vertices[3 * t3 + 2]);
+                vec3 n = normalize(cross(v2 - v1, v3 - v1)) * 1e-4;
 
-        for (uint i = 0; i < triangleCount; ++i) {
-            float nt;
-            uint t1 = triangles[3 * i];
-            uint t2 = triangles[3 * i + 1];
-            uint t3 = triangles[3 * i + 2];
-
-            vec3 v1 = vec3(vertices[3 * t1], vertices[3 * t1 + 1], vertices[3 * t1 + 2]);
-            vec3 v2 = vec3(vertices[3 * t2], vertices[3 * t2 + 1], vertices[3 * t2 + 2]);
-            vec3 v3 = vec3(vertices[3 * t3], vertices[3 * t3 + 1], vertices[3 * t3 + 2]);
-            vec3 n = cross(v2 - v1, v3 - v1);
-
-            if (dot(direction, n) <= 0.0 && intersection(oldPos, direction, v1, v2, v3, nt) && nt < t) {
-                t = nt;
-                normal = normalize(n);
+                if (intersection(oldPos + n, -2.0 * n, v1, v2, v3, nt) && nt < 1.0) {
+                    oldPos += n;
+                }
             }
+
+            vec3 newPos = oldPos + direction;
+
+            float t = 2.0;
+            vec3 normal;
+
+            for (uint i = 0; i < triangleCount; ++i) {
+                float nt;
+                uint t1 = triangles[3 * i];
+                uint t2 = triangles[3 * i + 1];
+                uint t3 = triangles[3 * i + 2];
+
+                vec3 v1 = vec3(vertices[3 * t1], vertices[3 * t1 + 1], vertices[3 * t1 + 2]);
+                vec3 v2 = vec3(vertices[3 * t2], vertices[3 * t2 + 1], vertices[3 * t2 + 2]);
+                vec3 v3 = vec3(vertices[3 * t3], vertices[3 * t3 + 1], vertices[3 * t3 + 2]);
+                vec3 n = cross(v2 - v1, v3 - v1);
+
+                if (dot(direction, n) <= 0.0 && intersection(oldPos, direction, v1, v2, v3, nt) && nt < t) {
+                    t = nt;
+                    normal = normalize(n);
+                }
+            }
+
+            if (t <= 1.0) {
+                newPos = oldPos + t * direction + 1e-5 * normal;
+                p.velocity = 0.8 * reflect(p.velocity, normal);
+            }
+
+            p.pos = newPos;
         }
-
-        if (t <= 1.0) {
-            //newPos = oldPos + t * direction + max(1e-5, 0.01 * length(direction)) * normal;
-
-            newPos = oldPos + t * direction + 1e-5 * normal;
-            p.velocity = /*restitution*/ 0.8 * reflect(p.velocity, normal);
-        }
-
-        p.pos = newPos;
+    }
+    else {
+        p.pos = oldPos + direction;
     }
 
     for (int i = 0; i < 3; i++) {

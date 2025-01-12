@@ -23,7 +23,7 @@ int numGroupsY = 1;
 int numGroupsZ = 1;
 
 unsigned gridSize = 32;
-float meshScale = 0.1f;
+float meshScale = 0.15f;
 
 int pboxSize = 15;
 int nbParticules = pboxSize * pboxSize * pboxSize;
@@ -130,7 +130,7 @@ void EngineManager::OnInitWindowEngine() {
     SharedServices::GetInstance().RegisterService("ScreenSize", std::make_shared<glm::vec2>(glm::vec2(1280, 720)));
     SharedServices::GetInstance().RegisterService("BBmin", std::make_shared<glm::vec3>(box->getBBmin()));
     SharedServices::GetInstance().RegisterService("BBmax", std::make_shared<glm::vec3>(box->getBBmax()));
-    glm::vec3 colorParti = glm::vec3(1., 1., 1.);
+    glm::vec3 colorParti = glm::vec3(0., 0., 1.);
     SharedServices::GetInstance().RegisterService("CouleurParticule", std::make_shared<glm::vec3>(colorParti));
     float coeffAbsorption = 0.0;
     SharedServices::GetInstance().RegisterService("CoeffAbso", std::make_shared<float>(coeffAbsorption));
@@ -143,10 +143,6 @@ void EngineManager::OnInitWindowEngine() {
     mesh->Init();
     shaders.useShaderByName("Mesh");
     shaders.setBind1i("Mesh", "tex0", textures.getTextureUnit("terrain"));
-
-    // Params Mesh
-    float rotaSpeed = 45.0f;
-    SharedServices::GetInstance().RegisterService("RotationSpeed", std::make_shared<float>(rotaSpeed));
 
     // Calcul de smoothLength
     float Volume = size * size * size;
@@ -178,8 +174,11 @@ void EngineManager::OnInitWindowEngine() {
     bool gravityFollowCamera = false;
     SharedServices::GetInstance().RegisterService("gravityFollowsCamera", std::make_shared<bool>(gravityFollowCamera));
 
-    bool isShading = true;
-    SharedServices::GetInstance().RegisterService("Shading", std::make_shared<bool>(isShading));
+    bool hasMeshCollision = true;
+    SharedServices::GetInstance().RegisterService("hasMeshCollision", std::make_shared<bool>(hasMeshCollision));
+
+    int shadingFormat = 0;
+    SharedServices::GetInstance().RegisterService("shadingFormat", std::make_shared<int>(shadingFormat));
 
     // -------------------------------------------------------- //
 
@@ -375,6 +374,7 @@ void EngineManager::OnUpdateWindowEngine() {
         shaders.setCompBind1f("particleIntegrationCS", "dispersion", 0.1f);     
         shaders.setCompBind1f("particleIntegrationCS", "restitution", *SharedServices::GetInstance().GetService<float>("restitution"));
         shaders.setCompBind1u("particleIntegrationCS", "triangleCount", mesh->getNbIndices() / 3);
+        shaders.setCompBind1i("particleIntegrationCS", "hasMeshCollision", *SharedServices::GetInstance().GetService<bool>("hasMeshCollision"));
 
         shaders.memoryBarrierByName("particleIntegrationCS", CS_SSBO);
         m_TimersList.at(0).UpdateDeltaTime();
@@ -401,13 +401,15 @@ void EngineManager::OnUpdateWindowEngine() {
         box->Update();
 
         // Mesh
-        shaders.useShaderByName("Mesh");
-        shaders.setBind4fv("Mesh", "model", 1, GL_FALSE, glm::value_ptr(meshModel));
-        shaders.setBind4fv("Mesh", "mvp", 1, GL_FALSE, glm::value_ptr(meshMvp));
-        mesh->Update();
+        if (*SharedServices::GetInstance().GetService<bool>("hasMeshCollision") == true) {
+            shaders.useShaderByName("Mesh");
+            shaders.setBind4fv("Mesh", "model", 1, GL_FALSE, glm::value_ptr(meshModel));
+            shaders.setBind4fv("Mesh", "mvp", 1, GL_FALSE, glm::value_ptr(meshMvp));
+            mesh->Update();
+        }
 
         // Particules
-        if(*SharedServices::GetInstance().GetService<bool>("Shading") == true) {
+        if(*SharedServices::GetInstance().GetService<int>("shadingFormat") == 0) {
             glEnable(GL_BLEND);
             glBlendFunc(GL_ONE, GL_ONE);
             shaders.replaceShader("Particule", FilePath::getFilePath("/Assets/EngineAssets/Shaders/ParticuleVert.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/SSR.glsl"));
@@ -428,6 +430,7 @@ void EngineManager::OnUpdateWindowEngine() {
         shaders.setBind3f("Particule", "baseColor", *SharedServices::GetInstance().GetService<glm::vec3>("CouleurParticule"));
         shaders.setBind1f("Particule", "absorptionCoefficient", *SharedServices::GetInstance().GetService<float>("CoeffAbso"));
         shaders.setBind1f("Particule", "sigma", *SharedServices::GetInstance().GetService<float>("Sigma"));
+        shaders.setBind1i("Particule", "shadingFormat", *SharedServices::GetInstance().GetService<int>("shadingFormat"));
 
         for (const auto& particle : particles) {
             glm::vec4 viewPos = view * glm::vec4(particle.pos, 1.0f);

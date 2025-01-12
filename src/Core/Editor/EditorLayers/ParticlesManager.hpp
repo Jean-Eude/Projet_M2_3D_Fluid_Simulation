@@ -21,9 +21,15 @@ class ParticlesManager : public LayerEditor {
                 auto colorParti = SharedServices::GetInstance().GetService<glm::vec3>("CouleurParticule");
                 auto abso = SharedServices::GetInstance().GetService<float>("CoeffAbso");
                 auto sig = SharedServices::GetInstance().GetService<float>("Sigma");
-                auto shading = SharedServices::GetInstance().GetService<bool>("Shading");
+                auto hasMeshCollision = SharedServices::GetInstance().GetService<bool>("hasMeshCollision");
+                auto shadingFormat = SharedServices::GetInstance().GetService<int>("shadingFormat");
 
-                auto speed = SharedServices::GetInstance().GetService<float>("RotationSpeed");
+                const char* items[] = {
+                    "Screen-Space Rendering",
+                    "Position",
+                    "Vélocité"
+                };
+                const int numItems = IM_ARRAYSIZE(items);
 
                 ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
                 ImGui::Begin("Gestionnaire de particules");
@@ -39,15 +45,18 @@ class ParticlesManager : public LayerEditor {
                 ImGui::Checkbox("Gravité en fonction de la caméra", gravityFollowsCamera.get());
 
                 ImGui::Spacing();
+                ImGui::Text("Affichage des particules");
+                ImGui::Combo("Méthode d'affichage", shadingFormat.get(), items, numItems);
+
+                ImGui::Spacing();
                 ImGui::Text("Paramètres du Screen Space Rendering");
                 ImGui::ColorEdit3("Couleur des particules", glm::value_ptr(*colorParti));
                 ImGui::SliderFloat("Coefficient d'absorption", abso.get(), 0.0f, 10.0f);
                 ImGui::SliderFloat("Sigma", sig.get(), 0.0f, 1.0f);
-                ImGui::Checkbox("Shading ?", shading.get());
-
+                
                 ImGui::Spacing();
                 ImGui::Text("Paramètres du maillage");
-                ImGui::SliderFloat("Vitesse de rotation", speed.get(), 0.0f, 1000.0f);
+                ImGui::Checkbox("Afficher le maillage", hasMeshCollision.get());
 
                 ImGui::End();
                 ImGui::PopStyleVar();
