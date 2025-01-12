@@ -23,9 +23,9 @@ int numGroupsY = 1;
 int numGroupsZ = 1;
 
 unsigned gridSize = 32;
-float meshScale = 0.15f;
+float meshScale = 0.27f;
 
-int pboxSize = 15;
+int pboxSize = 35;
 int nbParticules = pboxSize * pboxSize * pboxSize;
 std::vector<Particule> particles(nbParticules);
 unsigned int VBO3, VAO3, EBO3;
@@ -106,7 +106,7 @@ void EngineManager::OnInitWindowEngine() {
     m_TimersList.at(0).Start();
 
     // Paramètres
-    float size = 0.45f;
+    float size = 0.7f;
 
     // Plan
     shaders.enqueueShader("Base", FilePath::getFilePath("/Assets/EngineAssets/Shaders/PlaneVert.glsl"), FilePath::getFilePath("/Assets/EngineAssets/Shaders/PlaneFrag.glsl"));
