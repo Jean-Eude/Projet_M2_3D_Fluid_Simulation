@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Texture.hpp>
-#include <ThreadManager.hpp>
 
 class TexturesManager {
     private:

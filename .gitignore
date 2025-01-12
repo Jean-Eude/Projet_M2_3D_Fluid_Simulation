@@ -4,5 +4,6 @@ bin/*
 !bin/CMakeLists.txt
 
 Assets/EngineAssets/Models/*.obj
+!Assets/EngineAssets/Models/suzanne.obj
 Assets/EngineAssets/Models/*.stl
 Assets/EngineAssets/Models/*.mtl

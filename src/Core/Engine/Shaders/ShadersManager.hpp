@@ -2,15 +2,13 @@
 
 #include <Shader.hpp>
 #include <ComputeShader.hpp>
-#include <ThreadManager.hpp>
-
 
 enum ShaderType {
     SHADER_VF,
     SHADER_CS,
 };
 
-class ShadersManager : public ThreadManager {
+class ShadersManager {
     private:
         std::vector<std::shared_ptr<Shader>> shaderQueue;
         std::vector<std::shared_ptr<ComputeShader>> computeShaderQueue;
